@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Track Assistant V1.5</title>
+<title>Track Assistant V2.0</title>
 <style>
 :root{--bg:#0f1115;--card:#181c23;--muted:#8f9bad;--text:#f5f7fb;--accent:#7c5cff;--ok:#3ecf8e;--warn:#ffb020;--danger:#ff5d5d;--line:#2a303a}
 *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
@@ -53,15 +53,35 @@ label{display:block;font-size:13px;color:#aab5c5;margin:10px 0 6px}input,textare
     </div>
   </div>
 
+  <div id="carManager" class="card hidden" style="margin-top:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div>
+        <div class="muted">ACTIVE CAR</div>
+        <select id="activeCarSelect" style="min-width:220px;margin-top:6px"></select>
+      </div>
+      <button class="secondary" id="addCarBtn">＋ Add Car</button>
+    </div>
+  </div>
+
+  <div id="addCarPanel" class="card hidden" style="margin-top:14px">
+    <h2>Add Car</h2>
+    <div class="row2">
+      <div><label>Car name</label><input id="newCarName" placeholder="e.g. GTLM, Pan Car, Open"></div>
+      <div><label>Class</label><input id="newCarClass" placeholder="e.g. 2500 GTLM"></div>
+    </div>
+    <div style="height:10px"></div>
+    <button class="primary" id="createCarBtn">Create Car</button>
+  </div>
+
   <div id="sessionSetup" class="card hidden" style="margin-top:14px">
     <h2>New Session</h2>
     <div class="row2">
-      <div><label>Car</label><input id="car" placeholder="e.g. DS28 Purple"></div>
       <div><label>Track</label><input id="track" placeholder="e.g. Swiss RC Protech"></div>
+      <div><label>Layout</label><input id="layout" placeholder="Layout name / number"></div>
     </div>
     <div class="row2">
-      <div><label>Layout</label><input id="layout" placeholder="Layout name / number"></div>
-      <div><label>Class</label><input id="raceClass" placeholder="2500 GTLM"></div>
+      <div><label>First car name</label><input id="car" placeholder="e.g. GTLM"></div>
+      <div><label>Class</label><input id="raceClass" placeholder="e.g. 2500 GTLM"></div>
     </div>
     <label>Session notes</label><textarea id="sessionNotes" placeholder="Optional"></textarea>
     <div style="height:10px"></div>
@@ -127,7 +147,7 @@ label{display:block;font-size:13px;color:#aab5c5;margin:10px 0 6px}input,textare
     </div>
   </div>
 
-  <div class="footer">Prototype V1.5 · New-session reset + automatic average lap · Data is stored locally in this browser.</div>
+  <div class="footer">Prototype V2.0 · Multi-car testing · Data is stored locally in this browser.</div>
 </div>
 <script>
 const baselineFields = [
@@ -190,9 +210,17 @@ function tick(){ $('clockBadge').textContent = localStamp(); }
 setInterval(tick,1000); tick();
 
 function save(){ if(session) localStorage.setItem('trackAssistantSession', JSON.stringify(session)); render(); }
-function load(){ try{session=JSON.parse(localStorage.getItem('trackAssistantSession'));}catch(e){} if(session) render(); }
-function currentRun(){ return session?.runs?.[session.runs.length-1] || null; }
-function completedRuns(){ return session?.runs?.filter(r=>r.completed && Number.isFinite(Number(r.results?.avgLap)) && Number.isFinite(Number(r.results?.bestLap))) || []; }
+function load(){ try{session=JSON.parse(localStorage.getItem('trackAssistantSession'));}catch(e){} if(session){ migrateOldSession(); save(); } }
+function activeCar(){ return session?.cars?.find(c=>c.id===session.activeCarId) || session?.cars?.[0] || null; }
+function currentRun(){ const c=activeCar(); return c?.runs?.[c.runs.length-1] || null; }
+function completedRuns(){ return activeCar()?.runs?.filter(r=>r.completed && Number.isFinite(Number(r.results?.avgLap)) && Number.isFinite(Number(r.results?.bestLap))) || []; }
+function makeRun(n,setup={}){ return {runNumber:n,createdAt:nowISO(),preparedAt:null,effectiveSetup:{...setup},environment:{},preRunMeasurements:{},results:{},notes:{}}; }
+function migrateOldSession(){
+  if(session && !session.cars){
+    const c={id:'car-'+Date.now(),name:session.car||'Car 1',raceClass:session.raceClass||'',baselineSetup:session.baselineSetup||{},runs:session.runs||[]};
+    session.cars=[c]; session.activeCarId=c.id;
+  }
+}
 function fmtLap(v){ const n=Number(v); return Number.isFinite(n)?n.toFixed(3):'—'; }
 function diffText(current,best,label){
   const c=Number(current), b=Number(best);
@@ -211,7 +239,7 @@ function renderRunSummary(){
   const bestLap=Math.min(...runs.map(x=>Number(x.results.bestLap)));
   const avg=Number(r.results.avgLap), best=Number(r.results.bestLap);
   $('summaryTitle').textContent=`Run ${r.runNumber} saved`;
-  $('summarySub').textContent=`${session.car||'Car'} · ${session.track||'Track'}${session.raceClass?' · '+session.raceClass:''}`;
+  $('summarySub').textContent=`${activeCar()?.name||'Car'} · ${session.track||'Track'}${activeCar()?.raceClass?' · '+activeCar().raceClass:''}`;
   $('summaryAvg').textContent=fmtLap(avg);
   $('summaryBest').textContent=fmtLap(best);
   const ac=diffText(avg,bestAvg,'average'); $('summaryAvgCompare').textContent=ac.text; $('summaryAvgCompare').className='metricCompare '+ac.cls;
@@ -240,14 +268,17 @@ function render(){
   if(!session){ $('runNumber').textContent='1'; $('runStatus').textContent='No active session'; return; }
   const r=currentRun();
   $('runNumber').textContent=r?.runNumber || 1;
-  $('runStatus').textContent=`${session.car || 'Car'} · ${session.track || 'Track'} · ${session.raceClass || ''}`;
+  const c=activeCar();
+  $('runStatus').textContent=`${c?.name || 'Car'} · ${session.track || 'Track'} · ${c?.raceClass || ''}`;
   ['prepareBtn','postBtn','quickBtn','nextRunBtn','exportBtn'].forEach(x=>$(x).disabled=false);
-  $('newSessionBtn').textContent='Start Another Session';
-  const setup=r?.effectiveSetup || session.baselineSetup || {};
+  $('newSessionBtn').textContent='NEW SESSION';
+  $('carManager').classList.remove('hidden');
+  $('activeCarSelect').innerHTML=session.cars.map(x=>`<option value="${escapeHtml(x.id)}"${x.id===session.activeCarId?' selected':''}>${escapeHtml(x.name)}${x.raceClass?' · '+escapeHtml(x.raceClass):''}</option>`).join('');
+  const setup=r?.effectiveSetup || c?.baselineSetup || {};
   const keys=Object.keys(setup);
   $('setupView').innerHTML = keys.length ? keys.map(k=>`<div class="kv"><span>${pretty(k)}</span><strong>${escapeHtml(String(setup[k]??''))}</strong></div>`).join('') : '<div class="muted">No setup yet.</div>';
-  if(!session.runs.length){ $('timeline').innerHTML='<div class="muted">No runs yet.</div>'; }
-  else $('timeline').innerHTML=[...session.runs].reverse().map(r=>{
+  if(!c?.runs?.length){ $('timeline').innerHTML='<div class="muted">No runs yet.</div>'; }
+  else $('timeline').innerHTML=[...c.runs].reverse().map(r=>{
     let line=[];
     if(r.results?.lapsCompleted!=null && r.preRunMeasurements?.runDuration!=null) line.push(`${r.results.lapsCompleted} laps/${r.preRunMeasurements.runDuration}m`);
     if(r.results?.avgLap) line.push(`Avg ${r.results.avgLap}`);
@@ -261,12 +292,13 @@ function pretty(k){ return ({airTemp:'Air °C',trackTemp:'Track °C',humidity:'H
 function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 
 $('newSessionBtn').onclick=()=>{
-  if(session && session.runs?.length){
+  if(session && session.cars?.length){
     const ok=confirm('Start a completely new session? The current session will be replaced in this browser. Export it first if you want to keep a CSV copy.');
     if(!ok) return;
     session=null;
     localStorage.removeItem('trackAssistantSession');
     $('lastRunSummary').classList.add('hidden');
+    $('carManager').classList.add('hidden');
     $('setupView').innerHTML='<div class="muted">No setup yet.</div>';
     $('timeline').innerHTML='<div class="muted">No runs yet.</div>';
     $('runNumber').textContent='1';
@@ -277,8 +309,9 @@ $('newSessionBtn').onclick=()=>{
   $('sessionSetup').scrollIntoView({behavior:'smooth',block:'start'});
 };
 $('createSessionBtn').onclick=()=>{
-  session={id:crypto.randomUUID?.()||String(Date.now()),createdAt:nowISO(),car:$('car').value.trim(),track:$('track').value.trim(),layout:$('layout').value.trim(),raceClass:$('raceClass').value.trim(),notes:$('sessionNotes').value.trim(),baselineSetup:{},runs:[]};
-  session.runs.push({runNumber:1,createdAt:nowISO(),preparedAt:null,effectiveSetup:{},environment:{},preRunMeasurements:{},results:{},notes:{}});
+  const carId='car-'+Date.now();
+  const firstCar={id:carId,name:$('car').value.trim()||'Car 1',raceClass:$('raceClass').value.trim(),baselineSetup:{},runs:[makeRun(1)]};
+  session={id:crypto.randomUUID?.()||String(Date.now()),createdAt:nowISO(),track:$('track').value.trim(),layout:$('layout').value.trim(),notes:$('sessionNotes').value.trim(),cars:[firstCar],activeCarId:carId};
   $('sessionSetup').classList.add('hidden'); save(); startWizard('baseline');
 };
 
@@ -348,8 +381,8 @@ function acceptAnswer(raw){
   if(voiceTarget==='baseline'){
     if(environmentalKeys.includes(key)) r.environment[key]=val;
     else if(preMeasurementKeys.includes(key)) r.preRunMeasurements[key]=val;
-    else if(val!==null) session.baselineSetup[key]=val;
-    r.effectiveSetup={...session.baselineSetup};
+    else if(val!==null) activeCar().baselineSetup[key]=val;
+    r.effectiveSetup={...activeCar().baselineSetup};
   }
   if(voiceTarget==='prepare'){
     if(environmentalKeys.includes(key)) r.environment[key]=val;
@@ -392,13 +425,13 @@ function finishWizard(){
   }
 }
 
-$('prepareBtn').onclick=()=>startWizard(currentRun().runNumber===1 && !Object.keys(session.baselineSetup).length?'baseline':'prepare');
+$('prepareBtn').onclick=()=>startWizard(currentRun().runNumber===1 && !Object.keys(activeCar().baselineSetup||{}).length?'baseline':'prepare');
 $('postBtn').onclick=()=>startWizard('post');
 function createNextRun(){
   const prev=currentRun();
   if(!prev) return;
   const n=prev.runNumber+1;
-  session.runs.push({runNumber:n,createdAt:nowISO(),preparedAt:null,effectiveSetup:{...(prev.effectiveSetup||session.baselineSetup)},environment:{},preRunMeasurements:{},results:{},notes:{},basedOn:prev.runNumber});
+  activeCar().runs.push({runNumber:n,createdAt:nowISO(),preparedAt:null,effectiveSetup:{...(prev.effectiveSetup||activeCar().baselineSetup||{})},environment:{},preRunMeasurements:{},results:{},notes:{},basedOn:prev.runNumber});
   save(); startWizard('prepare');
 }
 $('nextRunBtn').onclick=createNextRun;
@@ -420,10 +453,26 @@ function initSpeech(){
 }
 initSpeech(); $('listenBtn').onclick=()=>{ try{speechSynthesis.cancel();}catch(e){} if(recognition){ try{recognition.start();}catch(e){ $('speechStatus').textContent='Microphone is already active. Try again in a moment.';} } else $('speechStatus').textContent='Use the typed answer box below.'; };
 
+$('activeCarSelect').onchange=()=>{
+  session.activeCarId=$('activeCarSelect').value;
+  save();
+  $('lastRunSummary').classList.add('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+$('addCarBtn').onclick=()=>{ $('addCarPanel').classList.remove('hidden'); $('addCarPanel').scrollIntoView({behavior:'smooth',block:'start'}); };
+$('createCarBtn').onclick=()=>{
+  const name=$('newCarName').value.trim(); if(!name){ alert('Please give the car a name.'); return; }
+  const id='car-'+Date.now();
+  session.cars.push({id,name,raceClass:$('newCarClass').value.trim(),baselineSetup:{},runs:[makeRun(1)]});
+  session.activeCarId=id;
+  $('newCarName').value=''; $('newCarClass').value=''; $('addCarPanel').classList.add('hidden');
+  save(); startWizard('baseline');
+};
+
 $('exportBtn').onclick=()=>{
  const rows=[['Run','Date','Time','Air C','Track C','Humidity','Motor Before','Run Duration min','FL Diameter mm','FR Diameter mm','RL Diameter mm','RR Diameter mm','Body','Motor','Battery','RotoFan','Gear Ratio','Tyres','TRD','Changes','Laps Completed','Total Result Time sec','Avg Lap','Best Lap','Delta','Motor After','Motor Delta','Purpose','Observations','Conclusion','Confidence']];
- session.runs.forEach(r=>{const s=r.effectiveSetup||{};const e=r.environment||{};const x=r.results||{};const n=r.notes||{};const p=r.preRunMeasurements||{}; rows.push([r.runNumber,r.date||'',r.time||'',e.airTemp??'',e.trackTemp??'',e.humidity??'',p.motorBefore??'',p.runDuration??'',p.flDiameter??'',p.frDiameter??'',p.rlDiameter??'',p.rrDiameter??'',s.body??'',s.motor??'',s.battery??'',s.rotofan??'',s.gearRatio??'',s.tires??'',s.trd??'',r.changes??'',x.lapsCompleted??'',x.totalResultTime??'',x.avgLap??'',x.bestLap??'',x.delta??'',x.motorAfter??'',x.motorDelta??'',n.purpose??'',n.observations??'',n.conclusion??'',n.confidence??'']);});
- const csv=rows.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${session.car||'session'}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
+ activeCar().runs.forEach(r=>{const s=r.effectiveSetup||{};const e=r.environment||{};const x=r.results||{};const n=r.notes||{};const p=r.preRunMeasurements||{}; rows.push([r.runNumber,r.date||'',r.time||'',e.airTemp??'',e.trackTemp??'',e.humidity??'',p.motorBefore??'',p.runDuration??'',p.flDiameter??'',p.frDiameter??'',p.rlDiameter??'',p.rrDiameter??'',s.body??'',s.motor??'',s.battery??'',s.rotofan??'',s.gearRatio??'',s.tires??'',s.trd??'',r.changes??'',x.lapsCompleted??'',x.totalResultTime??'',x.avgLap??'',x.bestLap??'',x.delta??'',x.motorAfter??'',x.motorDelta??'',n.purpose??'',n.observations??'',n.conclusion??'',n.confidence??'']);});
+ const csv=rows.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${activeCar()?.name||'session'}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
 };
 load();
 </script>
