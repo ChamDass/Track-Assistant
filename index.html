@@ -90,13 +90,18 @@ label{display:block;font-size:13px;color:#aab5c5;margin:10px 0 6px}input,textare
     </div>
   </div>
 
-  <div class="footer">Prototype V1 · Data is stored locally in this browser.</div>
+  <div class="footer">Prototype V1.1 · Pre-run measurements corrected · Data is stored locally in this browser.</div>
 </div>
 <script>
 const baselineFields = [
   ['airTemp','Air temperature in degrees Celsius?','number'],
   ['trackTemp','Track temperature in degrees Celsius?','number'],
   ['humidity','Humidity percentage?','number'],
+  ['motorBefore','Motor temperature before the run?','number'],
+  ['flBefore','Front left tyre temperature before the run? Say skip if not measured.','number'],
+  ['frBefore','Front right tyre temperature before the run? Say skip if not measured.','number'],
+  ['rlBefore','Rear left tyre temperature before the run? Say skip if not measured.','number'],
+  ['rrBefore','Rear right tyre temperature before the run? Say skip if not measured.','number'],
   ['body','Body?','text'],
   ['motor','Motor?','text'],
   ['battery','Battery number or ID?','text'],
@@ -113,17 +118,21 @@ const preRunFields = [
   ['airTemp','Air temperature before this run?','number'],
   ['trackTemp','Track temperature before this run?','number'],
   ['humidity','Humidity before this run?','number'],
+  ['motorBefore','Motor temperature before this run?','number'],
+  ['flBefore','Front left tyre temperature before this run? Say skip if not measured.','number'],
+  ['frBefore','Front right tyre temperature before this run? Say skip if not measured.','number'],
+  ['rlBefore','Rear left tyre temperature before this run? Say skip if not measured.','number'],
+  ['rrBefore','Rear right tyre temperature before this run? Say skip if not measured.','number'],
   ['changes','Are you testing anything different from the previous run? Say no changes, or describe the change.','text']
 ];
 const postRunFields = [
   ['avgLap','Average lap time?','number'],
   ['bestLap','Best lap time?','number'],
-  ['motorBefore','Motor temperature before the run?','number'],
   ['motorAfter','Motor temperature after the run?','number'],
-  ['flTemp','Front left tyre temperature? Say skip if not measured.','number'],
-  ['frTemp','Front right tyre temperature?','number'],
-  ['rlTemp','Rear left tyre temperature?','number'],
-  ['rrTemp','Rear right tyre temperature?','number'],
+  ['flAfter','Front left tyre temperature after the run? Say skip if not measured.','number'],
+  ['frAfter','Front right tyre temperature after the run?','number'],
+  ['rlAfter','Rear left tyre temperature after the run?','number'],
+  ['rrAfter','Rear right tyre temperature after the run?','number'],
   ['purpose','Purpose of this run?','text'],
   ['observations','What did you observe about the car?','text'],
   ['conclusion','Conclusion or decision?','text'],
@@ -171,14 +180,14 @@ function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','
 $('newSessionBtn').onclick=()=> $('sessionSetup').classList.remove('hidden');
 $('createSessionBtn').onclick=()=>{
   session={id:crypto.randomUUID?.()||String(Date.now()),createdAt:nowISO(),car:$('car').value.trim(),track:$('track').value.trim(),layout:$('layout').value.trim(),raceClass:$('raceClass').value.trim(),notes:$('sessionNotes').value.trim(),baselineSetup:{},runs:[]};
-  session.runs.push({runNumber:1,createdAt:nowISO(),preparedAt:null,effectiveSetup:{},environment:{},results:{},notes:{}});
+  session.runs.push({runNumber:1,createdAt:nowISO(),preparedAt:null,effectiveSetup:{},environment:{},preRunMeasurements:{},results:{},notes:{}});
   $('sessionSetup').classList.add('hidden'); save(); startWizard('baseline');
 };
 
 function startWizard(mode){
   voiceTarget=mode;
   voiceIndex=0;
-  if(mode==='baseline'){ voiceQueue=baselineFields; $('voiceMode').textContent='Run 1 · Baseline wizard'; }
+  if(mode==='baseline'){ voiceQueue=baselineFields; $('voiceMode').textContent='Run 1 · Baseline + pre-run'; const r=currentRun(); r.preparedAt=nowISO(); r.date=new Date().toLocaleDateString(); r.time=new Date().toLocaleTimeString(); }
   if(mode==='prepare'){ voiceQueue=preRunFields; $('voiceMode').textContent=`Run ${currentRun().runNumber} · Pre-run`; currentRun().preparedAt=nowISO(); currentRun().date=new Date().toLocaleDateString(); currentRun().time=new Date().toLocaleTimeString(); }
   if(mode==='post'){ voiceQueue=postRunFields; $('voiceMode').textContent=`Run ${currentRun().runNumber} · Post-run`; currentRun().finishedAt=nowISO(); }
   $('voicePanel').classList.remove('hidden'); ask(); save();
@@ -203,13 +212,18 @@ function acceptAnswer(raw){
   if(type==='number' && val && !/skip|unknown|don't know|dont know/i.test(val)) val=parseNumber(val);
   if(/skip|unknown|don't know|dont know/i.test(String(val))) val=null;
   const r=currentRun();
+  const environmentalKeys=['airTemp','trackTemp','humidity'];
+  const preMeasurementKeys=['motorBefore','flBefore','frBefore','rlBefore','rrBefore'];
+  const nonSetupKeys=[...environmentalKeys,...preMeasurementKeys];
   if(voiceTarget==='baseline'){
-    if(val!==null) session.baselineSetup[key]=val;
+    if(environmentalKeys.includes(key)) r.environment[key]=val;
+    else if(preMeasurementKeys.includes(key)) r.preRunMeasurements[key]=val;
+    else if(val!==null) session.baselineSetup[key]=val;
     r.effectiveSetup={...session.baselineSetup};
-    if(['airTemp','trackTemp','humidity'].includes(key)) r.environment[key]=val;
   }
   if(voiceTarget==='prepare'){
-    if(['airTemp','trackTemp','humidity'].includes(key)) r.environment[key]=val;
+    if(environmentalKeys.includes(key)) r.environment[key]=val;
+    else if(preMeasurementKeys.includes(key)) r.preRunMeasurements[key]=val;
     if(key==='changes'){
       r.changes=val;
       if(val && !/^no changes?$/i.test(String(val))) r.changeVoiceText=val;
@@ -230,7 +244,7 @@ function acceptAnswer(raw){
 function finishWizard(){
   const r=currentRun();
   if(voiceTarget==='post'){
-    const a=Number(r.results.avgLap), b=Number(r.results.bestLap), mb=Number(r.results.motorBefore), ma=Number(r.results.motorAfter);
+    const a=Number(r.results.avgLap), b=Number(r.results.bestLap), mb=Number(r.preRunMeasurements?.motorBefore), ma=Number(r.results.motorAfter);
     if(Number.isFinite(a)&&Number.isFinite(b)) r.results.delta=a-b;
     if(Number.isFinite(mb)&&Number.isFinite(ma)) r.results.motorDelta=ma-mb;
     r.completed=true;
@@ -243,7 +257,7 @@ $('prepareBtn').onclick=()=>startWizard(currentRun().runNumber===1 && !Object.ke
 $('postBtn').onclick=()=>startWizard('post');
 $('nextRunBtn').onclick=()=>{
   const prev=currentRun(); const n=prev.runNumber+1;
-  session.runs.push({runNumber:n,createdAt:nowISO(),preparedAt:null,effectiveSetup:{...(prev.effectiveSetup||session.baselineSetup)},environment:{},results:{},notes:{},basedOn:prev.runNumber});
+  session.runs.push({runNumber:n,createdAt:nowISO(),preparedAt:null,effectiveSetup:{...(prev.effectiveSetup||session.baselineSetup)},environment:{},preRunMeasurements:{},results:{},notes:{},basedOn:prev.runNumber});
   save(); startWizard('prepare');
 };
 $('quickBtn').onclick=()=>{
@@ -264,8 +278,8 @@ function initSpeech(){
 initSpeech(); $('listenBtn').onclick=()=>{ try{speechSynthesis.cancel();}catch(e){} if(recognition){ try{recognition.start();}catch(e){ $('speechStatus').textContent='Microphone is already active. Try again in a moment.';} } else $('speechStatus').textContent='Use the typed answer box below.'; };
 
 $('exportBtn').onclick=()=>{
- const rows=[['Run','Date','Time','Air C','Track C','Humidity','Body','Motor','Battery','RotoFan','Gear Ratio','Tyres','TRD','Changes','Avg Lap','Best Lap','Delta','Motor Before','Motor After','Motor Delta','FL Temp','FR Temp','RL Temp','RR Temp','Purpose','Observations','Conclusion','Confidence']];
- session.runs.forEach(r=>{const s=r.effectiveSetup||{};const e=r.environment||{};const x=r.results||{};const n=r.notes||{};rows.push([r.runNumber,r.date||'',r.time||'',e.airTemp??'',e.trackTemp??'',e.humidity??'',s.body??'',s.motor??'',s.battery??'',s.rotofan??'',s.gearRatio??'',s.tires??'',s.trd??'',r.changes??'',x.avgLap??'',x.bestLap??'',x.delta??'',x.motorBefore??'',x.motorAfter??'',x.motorDelta??'',x.flTemp??'',x.frTemp??'',x.rlTemp??'',x.rrTemp??'',n.purpose??'',n.observations??'',n.conclusion??'',n.confidence??'']);});
+ const rows=[['Run','Date','Time','Air C','Track C','Humidity','Motor Before','FL Before','FR Before','RL Before','RR Before','Body','Motor','Battery','RotoFan','Gear Ratio','Tyres','TRD','Changes','Avg Lap','Best Lap','Delta','Motor After','Motor Delta','FL After','FR After','RL After','RR After','Purpose','Observations','Conclusion','Confidence']];
+ session.runs.forEach(r=>{const s=r.effectiveSetup||{};const e=r.environment||{};const x=r.results||{};const n=r.notes||{};const p=r.preRunMeasurements||{}; rows.push([r.runNumber,r.date||'',r.time||'',e.airTemp??'',e.trackTemp??'',e.humidity??'',p.motorBefore??'',p.flBefore??'',p.frBefore??'',p.rlBefore??'',p.rrBefore??'',s.body??'',s.motor??'',s.battery??'',s.rotofan??'',s.gearRatio??'',s.tires??'',s.trd??'',r.changes??'',x.avgLap??'',x.bestLap??'',x.delta??'',x.motorAfter??'',x.motorDelta??'',x.flAfter??'',x.frAfter??'',x.rlAfter??'',x.rrAfter??'',n.purpose??'',n.observations??'',n.conclusion??'',n.confidence??'']);});
  const csv=rows.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${session.car||'session'}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
 };
 load();
