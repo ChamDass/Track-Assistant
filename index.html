@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Track Assistant V1.2</title>
+<title>Track Assistant V1.3</title>
 <style>
 :root{--bg:#0f1115;--card:#181c23;--muted:#8f9bad;--text:#f5f7fb;--accent:#7c5cff;--ok:#3ecf8e;--warn:#ffb020;--danger:#ff5d5d;--line:#2a303a}
 *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
@@ -16,6 +16,8 @@ label{display:block;font-size:13px;color:#aab5c5;margin:10px 0 6px}input,textare
 .summaryTop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
 .summaryTitle{font-size:24px;font-weight:800;margin:0}.summarySub{color:var(--muted);margin-top:4px}
 .metricGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0}.metric{background:#11151b;border:1px solid var(--line);border-radius:14px;padding:14px}.metricLabel{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.metricValue{font-size:30px;font-weight:850;margin-top:4px}.metricCompare{font-size:13px;margin-top:5px}.better{color:var(--ok)}.worse{color:var(--warn)}.equal{color:#cbd4e2}.bestBadge{display:inline-block;background:rgba(62,207,142,.15);color:var(--ok);border:1px solid rgba(62,207,142,.35);border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800}.noteBox{background:#11151b;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}.noteBox b{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}.nextHero{margin-top:14px;background:#20263a;border:1px solid #444f7d;border-radius:16px;padding:14px}.nextHero button{font-size:20px;padding:20px}.miniStats{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+.listenReady{animation:listenPulse 1s ease-in-out 3;box-shadow:0 0 0 0 rgba(124,92,255,.7)}
+@keyframes listenPulse{0%{box-shadow:0 0 0 0 rgba(124,92,255,.65);transform:scale(1)}50%{box-shadow:0 0 0 10px rgba(124,92,255,0);transform:scale(1.02)}100%{box-shadow:0 0 0 0 rgba(124,92,255,0);transform:scale(1)}}
 @media(max-width:700px){.grid,.actions,.actions3,.row,.row2,.metricGrid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.runnum{font-size:44px}}
 </style>
 </head>
@@ -125,7 +127,7 @@ label{display:block;font-size:13px;color:#aab5c5;margin:10px 0 6px}input,textare
     </div>
   </div>
 
-  <div class="footer">Prototype V1.2 · Post-run summary + session best comparison · Data is stored locally in this browser.</div>
+  <div class="footer">Prototype V1.4 · Tyre diameter + timed-run lap count · Data is stored locally in this browser.</div>
 </div>
 <script>
 const baselineFields = [
@@ -133,16 +135,18 @@ const baselineFields = [
   ['trackTemp','Track temperature in degrees Celsius?','number'],
   ['humidity','Humidity percentage?','number'],
   ['motorBefore','Motor temperature before the run?','number'],
-  ['flBefore','Front left tyre temperature before the run? Say skip if not measured.','number'],
-  ['frBefore','Front right tyre temperature before the run? Say skip if not measured.','number'],
-  ['rlBefore','Rear left tyre temperature before the run? Say skip if not measured.','number'],
-  ['rrBefore','Rear right tyre temperature before the run? Say skip if not measured.','number'],
+  ['runDuration','How long is this run? Say five or eight minutes.','number'],
   ['body','Body?','text'],
   ['motor','Motor?','text'],
   ['battery','Battery number or ID?','text'],
   ['rotofan','RotoFan on or off?','text'],
   ['gearRatio','Gear ratio? For example twelve fifty-three.','text'],
   ['tires','Tyres?','text'],
+  ['measureDiameters','Do you want to record the individual tyre diameters now? Say yes or no.','text'],
+  ['flDiameter','Front left tyre diameter in millimetres?','number'],
+  ['frDiameter','Front right tyre diameter in millimetres?','number'],
+  ['rlDiameter','Rear left tyre diameter in millimetres?','number'],
+  ['rrDiameter','Rear right tyre diameter in millimetres?','number'],
   ['trd','TRD or rear droop setting?','text'],
   ['frontSetup','Front setup or spring?','text'],
   ['rearSetup','Rear setup or spring?','text'],
@@ -154,20 +158,19 @@ const preRunFields = [
   ['trackTemp','Track temperature before this run?','number'],
   ['humidity','Humidity before this run?','number'],
   ['motorBefore','Motor temperature before this run?','number'],
-  ['flBefore','Front left tyre temperature before this run? Say skip if not measured.','number'],
-  ['frBefore','Front right tyre temperature before this run? Say skip if not measured.','number'],
-  ['rlBefore','Rear left tyre temperature before this run? Say skip if not measured.','number'],
-  ['rrBefore','Rear right tyre temperature before this run? Say skip if not measured.','number'],
+  ['runDuration','How long is this run? Say five or eight minutes.','number'],
+  ['measureDiameters','Do you want to record individual tyre diameters for this run? Say yes or no.','text'],
+  ['flDiameter','Front left tyre diameter in millimetres?','number'],
+  ['frDiameter','Front right tyre diameter in millimetres?','number'],
+  ['rlDiameter','Rear left tyre diameter in millimetres?','number'],
+  ['rrDiameter','Rear right tyre diameter in millimetres?','number'],
   ['changes','Are you testing anything different from the previous run? Say no changes, or describe the change.','text']
 ];
 const postRunFields = [
+  ['lapsCompleted','How many laps did you complete within the timed run?','number'],
   ['avgLap','Average lap time?','number'],
   ['bestLap','Best lap time?','number'],
   ['motorAfter','Motor temperature after the run?','number'],
-  ['flAfter','Front left tyre temperature after the run? Say skip if not measured.','number'],
-  ['frAfter','Front right tyre temperature after the run?','number'],
-  ['rlAfter','Rear left tyre temperature after the run?','number'],
-  ['rrAfter','Rear right tyre temperature after the run?','number'],
   ['purpose','Purpose of this run?','text'],
   ['observations','What did you observe about the car?','text'],
   ['conclusion','Conclusion or decision?','text'],
@@ -216,6 +219,13 @@ function renderRunSummary(){
   const isBest=Math.abs(avg-bestAvg)<0.0005 || Math.abs(best-bestLap)<0.0005;
   $('summaryBestBadge').classList.toggle('hidden',!isBest);
   const bits=[];
+  const duration=Number(r.preRunMeasurements?.runDuration), laps=Number(r.results?.lapsCompleted);
+  if(Number.isFinite(duration) && Number.isFinite(laps)){
+    const comparable=runs.filter(x=>Number(x.preRunMeasurements?.runDuration)===duration && Number.isFinite(Number(x.results?.lapsCompleted)));
+    const bestLaps=comparable.length?Math.max(...comparable.map(x=>Number(x.results.lapsCompleted))):laps;
+    bits.push(`${laps} laps / ${duration} min`);
+    bits.push(laps===bestLaps?`Best lap count for ${duration} min`:`Best ${duration}-min count: ${bestLaps} laps`);
+  }
   if(Number.isFinite(Number(r.results.delta))) bits.push(`Best→Avg Δ ${Number(r.results.delta).toFixed(3)} s`);
   if(Number.isFinite(Number(r.results.motorDelta))) bits.push(`Motor ΔT ${Number(r.results.motorDelta).toFixed(1)}°C`);
   bits.push(`${runs.length} completed run${runs.length===1?'':'s'}`);
@@ -239,6 +249,7 @@ function render(){
   if(!session.runs.length){ $('timeline').innerHTML='<div class="muted">No runs yet.</div>'; }
   else $('timeline').innerHTML=[...session.runs].reverse().map(r=>{
     let line=[];
+    if(r.results?.lapsCompleted!=null && r.preRunMeasurements?.runDuration!=null) line.push(`${r.results.lapsCompleted} laps/${r.preRunMeasurements.runDuration}m`);
     if(r.results?.avgLap) line.push(`Avg ${r.results.avgLap}`);
     if(r.results?.bestLap) line.push(`Best ${r.results.bestLap}`);
     if(r.results?.delta!=null) line.push(`Δ ${Number(r.results.delta).toFixed(3)}`);
@@ -246,7 +257,7 @@ function render(){
   }).join('');
   renderRunSummary();
 }
-function pretty(k){ return ({airTemp:'Air °C',trackTemp:'Track °C',humidity:'Humidity %',gearRatio:'Gear ratio',rotofan:'RotoFan',tires:'Tyres',trd:'TRD',frontSetup:'Front setup',rearSetup:'Rear setup',diff:'Diff',esc:'ESC'})[k] || k.replace(/([A-Z])/g,' $1').replace(/^./,m=>m.toUpperCase()); }
+function pretty(k){ return ({airTemp:'Air °C',trackTemp:'Track °C',humidity:'Humidity %',gearRatio:'Gear ratio',rotofan:'RotoFan',tires:'Tyres',trd:'TRD',flDiameter:'FL tyre Ø mm',frDiameter:'FR tyre Ø mm',rlDiameter:'RL tyre Ø mm',rrDiameter:'RR tyre Ø mm',frontSetup:'Front setup',rearSetup:'Rear setup',diff:'Diff',esc:'ESC'})[k] || k.replace(/([A-Z])/g,' $1').replace(/^./,m=>m.toUpperCase()); }
 function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 
 $('newSessionBtn').onclick=()=> $('sessionSetup').classList.remove('hidden');
@@ -256,6 +267,17 @@ $('createSessionBtn').onclick=()=>{
   $('sessionSetup').classList.add('hidden'); save(); startWizard('baseline');
 };
 
+function jumpToVoicePanel(highlightListen=true){
+  requestAnimationFrame(()=>{
+    $('voicePanel').scrollIntoView({behavior:'smooth',block:'start'});
+    if(highlightListen){
+      $('listenBtn').classList.remove('listenReady');
+      void $('listenBtn').offsetWidth;
+      $('listenBtn').classList.add('listenReady');
+      setTimeout(()=>$('listenBtn').classList.remove('listenReady'),3200);
+    }
+  });
+}
 function startWizard(mode){
   voiceTarget=mode;
   voiceIndex=0;
@@ -263,6 +285,7 @@ function startWizard(mode){
   if(mode==='prepare'){ voiceQueue=preRunFields; $('voiceMode').textContent=`Run ${currentRun().runNumber} · Pre-run`; currentRun().preparedAt=nowISO(); currentRun().date=new Date().toLocaleDateString(); currentRun().time=new Date().toLocaleTimeString(); }
   if(mode==='post'){ voiceQueue=postRunFields; $('voiceMode').textContent=`Run ${currentRun().runNumber} · Post-run`; currentRun().finishedAt=nowISO(); }
   $('voicePanel').classList.remove('hidden'); ask(); save();
+  jumpToVoicePanel(true);
 }
 function ask(){
   if(voiceIndex>=voiceQueue.length){ finishWizard(); return; }
@@ -275,7 +298,7 @@ function ask(){
 }
 function speak(text){ try{speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.rate=1.02; speechSynthesis.speak(u);}catch(e){} }
 
-function parseNumber(s){ const m=String(s).replace(',','.').match(/-?\d+(?:\.\d+)?/); return m?Number(m[0]):s; }
+function parseNumber(s){ const t=String(s).toLowerCase().replace(',','.'); const m=t.match(/-?\d+(?:\.\d+)?/); if(m) return Number(m[0]); const words={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10}; for(const [w,n] of Object.entries(words)){ if(new RegExp('\\b'+w+'\\b').test(t)) return n; } return s; }
 function acceptAnswer(raw){
   if(!session) return;
   const [key,,type]=voiceQueue[voiceIndex];
@@ -285,7 +308,7 @@ function acceptAnswer(raw){
   if(/skip|unknown|don't know|dont know/i.test(String(val))) val=null;
   const r=currentRun();
   const environmentalKeys=['airTemp','trackTemp','humidity'];
-  const preMeasurementKeys=['motorBefore','flBefore','frBefore','rlBefore','rrBefore'];
+  const preMeasurementKeys=['motorBefore','runDuration','measureDiameters','flDiameter','frDiameter','rlDiameter','rrDiameter'];
   const nonSetupKeys=[...environmentalKeys,...preMeasurementKeys];
   if(voiceTarget==='baseline'){
     if(environmentalKeys.includes(key)) r.environment[key]=val;
@@ -304,6 +327,10 @@ function acceptAnswer(raw){
   if(voiceTarget==='post'){
     if(['purpose','observations','conclusion','confidence'].includes(key)) r.notes[key]=val;
     else r.results[key]=val;
+  }
+  // Tyre diameter is optional. A single "no" skips all four diameter questions.
+  if(key==='measureDiameters' && (!val || /^(no|nope|skip|not now)/i.test(String(val)))){
+    voiceIndex += 4;
   }
   save();
   const shown = val===null ? 'Skipped' : String(val);
@@ -336,12 +363,11 @@ function createNextRun(){
   const n=prev.runNumber+1;
   session.runs.push({runNumber:n,createdAt:nowISO(),preparedAt:null,effectiveSetup:{...(prev.effectiveSetup||session.baselineSetup)},environment:{},preRunMeasurements:{},results:{},notes:{},basedOn:prev.runNumber});
   save(); startWizard('prepare');
-  setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),100);
 }
 $('nextRunBtn').onclick=createNextRun;
 $('summaryNextRunBtn').onclick=createNextRun;
 $('quickBtn').onclick=()=>{
-  voiceTarget='quick'; voiceQueue=[['quick','Describe this run naturally. Include any changes, temperatures, lap times, purpose, observations, and conclusion.','text']]; voiceIndex=0; $('voiceMode').textContent=`Run ${currentRun().runNumber} · Quick voice log`; $('voicePanel').classList.remove('hidden'); ask();
+  voiceTarget='quick'; voiceQueue=[['quick','Describe this run naturally. Include any changes, run duration, lap count, motor temperature, lap times, purpose, observations, and conclusion.','text']]; voiceIndex=0; $('voiceMode').textContent=`Run ${currentRun().runNumber} · Quick voice log`; $('voicePanel').classList.remove('hidden'); ask();
 };
 $('skipBtn').onclick=()=>{voiceIndex++;ask();}; $('cancelVoiceBtn').onclick=()=>{$('voicePanel').classList.add('hidden');};
 $('manualSubmitBtn').onclick=()=>acceptAnswer($('manualAnswer').value); $('manualAnswer').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();acceptAnswer($('manualAnswer').value);}});
@@ -358,8 +384,8 @@ function initSpeech(){
 initSpeech(); $('listenBtn').onclick=()=>{ try{speechSynthesis.cancel();}catch(e){} if(recognition){ try{recognition.start();}catch(e){ $('speechStatus').textContent='Microphone is already active. Try again in a moment.';} } else $('speechStatus').textContent='Use the typed answer box below.'; };
 
 $('exportBtn').onclick=()=>{
- const rows=[['Run','Date','Time','Air C','Track C','Humidity','Motor Before','FL Before','FR Before','RL Before','RR Before','Body','Motor','Battery','RotoFan','Gear Ratio','Tyres','TRD','Changes','Avg Lap','Best Lap','Delta','Motor After','Motor Delta','FL After','FR After','RL After','RR After','Purpose','Observations','Conclusion','Confidence']];
- session.runs.forEach(r=>{const s=r.effectiveSetup||{};const e=r.environment||{};const x=r.results||{};const n=r.notes||{};const p=r.preRunMeasurements||{}; rows.push([r.runNumber,r.date||'',r.time||'',e.airTemp??'',e.trackTemp??'',e.humidity??'',p.motorBefore??'',p.flBefore??'',p.frBefore??'',p.rlBefore??'',p.rrBefore??'',s.body??'',s.motor??'',s.battery??'',s.rotofan??'',s.gearRatio??'',s.tires??'',s.trd??'',r.changes??'',x.avgLap??'',x.bestLap??'',x.delta??'',x.motorAfter??'',x.motorDelta??'',x.flAfter??'',x.frAfter??'',x.rlAfter??'',x.rrAfter??'',n.purpose??'',n.observations??'',n.conclusion??'',n.confidence??'']);});
+ const rows=[['Run','Date','Time','Air C','Track C','Humidity','Motor Before','Run Duration min','FL Diameter mm','FR Diameter mm','RL Diameter mm','RR Diameter mm','Body','Motor','Battery','RotoFan','Gear Ratio','Tyres','TRD','Changes','Laps Completed','Avg Lap','Best Lap','Delta','Motor After','Motor Delta','Purpose','Observations','Conclusion','Confidence']];
+ session.runs.forEach(r=>{const s=r.effectiveSetup||{};const e=r.environment||{};const x=r.results||{};const n=r.notes||{};const p=r.preRunMeasurements||{}; rows.push([r.runNumber,r.date||'',r.time||'',e.airTemp??'',e.trackTemp??'',e.humidity??'',p.motorBefore??'',p.runDuration??'',p.flDiameter??'',p.frDiameter??'',p.rlDiameter??'',p.rrDiameter??'',s.body??'',s.motor??'',s.battery??'',s.rotofan??'',s.gearRatio??'',s.tires??'',s.trd??'',r.changes??'',x.lapsCompleted??'',x.avgLap??'',x.bestLap??'',x.delta??'',x.motorAfter??'',x.motorDelta??'',n.purpose??'',n.observations??'',n.conclusion??'',n.confidence??'']);});
  const csv=rows.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${session.car||'session'}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
 };
 load();
