@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Track Assistant V2.3 Progressive Voice Capture</title>
+<title>Track Assistant V2.4 Click-to-Record</title>
 <style>
 :root{--bg:#0d1015;--card:#171c24;--card2:#11161d;--line:#2b3340;--text:#f4f7fb;--muted:#95a2b5;--accent:#7c5cff;--ok:#38d18b;--warn:#ffb84d;--danger:#ff6060}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -19,42 +19,15 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
 .sectionTitle{grid-column:1/-1;font-size:12px;color:#9da9ba;text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
 .timeline{display:flex;flex-direction:column;gap:8px}.runItem{background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:11px}.runHead{display:flex;justify-content:space-between;gap:8px}.runHead strong{font-size:15px}.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}.chip{font-size:12px;background:#202834;border:1px solid #303a49;padding:5px 8px;border-radius:999px}.good{color:var(--ok)}.warn{color:var(--warn)}
 .summaryGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.metric{background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:11px}.metric .n{font-size:24px;font-weight:900}.metric .l{font-size:11px;text-transform:uppercase;color:var(--muted)}
-
-.reminderPanel{margin:12px 0;background:#10151c;border:1px solid var(--line);border-radius:15px;padding:11px}
-.reminderHeader{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
-.reminderHeader strong{font-size:14px}.reminderHeader span{font-size:11px;color:var(--muted)}
-.reminderGroup{border-top:1px solid #252e3a;padding-top:8px;margin-top:8px}
-.reminderGroup:first-of-type{border-top:0;margin-top:0;padding-top:0}
-.reminderGroup summary{cursor:pointer;font-size:12px;font-weight:800;color:#bac5d4;text-transform:uppercase;letter-spacing:.06em;padding:4px 0}
-.reminderChips{display:flex;gap:6px;flex-wrap:wrap;padding:7px 0 2px}
-.reminderChip{border:1px solid #303a48;background:#1a212b;color:#9da9b9;border-radius:999px;padding:6px 9px;font-size:11px;line-height:1.15;transition:.15s}
-.reminderChip.detected{background:rgba(56,209,139,.13);border-color:rgba(56,209,139,.5);color:#8df0bd;font-weight:750}
-.reminderChip.inherited{background:rgba(124,92,255,.12);border-color:rgba(124,92,255,.45);color:#c7bbff}
-.reminderChip.auto{background:rgba(255,184,77,.09);border-color:rgba(255,184,77,.38);color:#ffd290}
-.reminderChip .rv{opacity:.9;font-weight:800}
-.reminderLegend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:6px}
-
-.progressBox{margin-top:12px;border:1px solid #334052;background:#121820;border-radius:15px;padding:12px}
-.progressHead{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}
-.progressHead strong{font-size:14px}
-.progressHead span{font-size:11px;color:var(--muted)}
-.progressFields{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.progressField{background:#0f141b;border:1px solid #2e3947;border-radius:11px;padding:9px}
-.progressField label{margin:0 0 5px;font-size:11px}
-.progressField input,.progressField textarea{padding:8px;font-size:14px}
-.progressField textarea{min-height:55px}
-.captureCount{display:inline-block;background:#202938;border:1px solid #354152;border-radius:999px;padding:4px 8px;font-size:11px;color:#c7d0dc}
-@media(max-width:650px){.progressFields{grid-template-columns:1fr}}
-
-
 .footer{text-align:center;color:#707d90;font-size:11px;margin-top:20px}
 @media(max-width:650px){.grid2,.grid3,.extractGrid,.summaryGrid{grid-template-columns:1fr}.top{flex-direction:column}.hero{grid-template-columns:1fr}.speechButtons{grid-template-columns:1fr}.runNo{font-size:46px}}
 </style>
 </head>
+
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><h1>Track Assistant</h1><p>Speak freely. Test freely. The app organizes the data.</p></div>
+    <div class="brand"><h1>Track Assistant</h1><p>Tap the field you want, then speak only that value.</p></div>
     <div class="badge" id="clock">—</div>
   </div>
 
@@ -71,15 +44,15 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
   <div id="sessionPanel" class="card hidden">
     <h2>New testing session</h2>
     <div class="grid2">
-      <div><label>Track</label><input id="trackInput" placeholder="e.g. Swiss RC Protech"></div>
-      <div><label>Layout</label><input id="layoutInput" placeholder="Layout / track configuration"></div>
+      <div><label>Track</label><input id="trackInput" placeholder="Track"></div>
+      <div><label>Layout</label><input id="layoutInput" placeholder="Layout"></div>
     </div>
     <div class="grid2">
       <div><label>Run duration for the day</label><select id="durationInput"><option value="5">5 minutes</option><option value="8">8 minutes</option></select></div>
-      <div><label>First car name</label><input id="firstCarInput" placeholder="e.g. GTLM"></div>
+      <div><label>First car name</label><input id="firstCarInput" placeholder="GTLM"></div>
     </div>
     <div class="grid2">
-      <div><label>Category / class</label><input id="firstClassInput" placeholder="e.g. 2500 GTLM"></div>
+      <div><label>Category / class</label><input id="firstClassInput" placeholder="2500 GTLM"></div>
       <div><label>Session notes</label><input id="sessionNotesInput" placeholder="Optional"></div>
     </div>
     <button class="primary big" id="createSessionBtn" style="margin-top:12px">Create Session</button>
@@ -98,57 +71,30 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
     <button class="primary" id="createCarBtn" style="margin-top:12px">Add Car</button>
   </div>
 
-  <div id="mainControls" class="card hidden">
-    <h2>Trackside logging</h2>
-    <div class="speechButtons">
-      <button id="preBtn" class="speechButton pre">🎤 PRE-RUN<br><span class="small">Speak setup, conditions & changes</span></button>
-      <button id="postBtn" class="speechButton post" disabled>🎤 POST-RUN<br><span class="small">Speak results & observations</span></button>
-    </div>
-    <div class="small muted" style="margin-top:10px">You do not need to speak in a fixed order. Mention only what matters. Existing car setup is inherited automatically.</div>
+  <div id="preCard" class="card hidden">
+    <h2 id="preTitle">PRE-RUN</h2>
+    <div class="muted small">Tap any field you want to record. Purple = inherited from this car. Green = recorded for this run.</div>
+    <div id="preFields" class="reminderChips" style="margin-top:12px"></div>
+    <button id="savePreBtn" class="success big" style="margin-top:14px">✓ PRE-RUN READY</button>
   </div>
 
-  <div id="speechPanel" class="card hidden">
-    <h2 id="speechTitle">Pre-run free speech</h2>
-    <div class="muted" id="speechHint"></div>
-    <div id="reminderPanel" class="reminderPanel">
-      <div class="reminderHeader">
-        <strong>Things you may want to mention</strong>
-        <span>Prompts only — speak in any order</span>
-      </div>
-      <div id="reminderGroups"></div>
-      <div class="reminderLegend">
-        <span>Grey = optional</span><span>✓ Purple = inherited</span><span>✓ Green = detected</span><span>AUTO = calculated</span>
-      </div>
-    </div>
-    <button id="listenBtn" class="primary big">🎤 Add information</button>
-    <div class="small muted" style="margin-top:7px">You can tap the microphone as many times as you want. Each new voice entry is added to the same run.</div>
-    <label>Voice notes collected so far</label>
-    <div id="transcriptBox" class="transcript">Nothing yet.</div>
-    <label>Add or correct text manually</label>
-    <textarea id="transcriptEdit" placeholder="All voice entries accumulate here. You can edit this text too."></textarea>
+  <div id="postCard" class="card hidden">
+    <h2 id="postTitle">POST-RUN</h2>
+    <div class="muted small">Tap the fields you want to log after the run. Average lap, lap delta and motor ΔT are calculated automatically.</div>
+    <div id="postFields" class="reminderChips" style="margin-top:12px"></div>
+    <button id="savePostBtn" class="success big" style="margin-top:14px">✓ SAVE RUN RESULTS</button>
+  </div>
 
-    <div class="progressBox">
-      <div class="progressHead">
-        <strong>Information captured so far</strong>
-        <span id="captureCounter" class="captureCount">0 fields</span>
-      </div>
-      <div id="liveFieldsGrid" class="progressFields"></div>
-    </div>
-
+  <div id="fieldRecorder" class="card hidden">
+    <div class="muted small" id="fieldGroup">Field</div>
+    <div class="prompt" id="fieldPrompt">—</div>
+    <div id="fieldCurrent" class="transcript">—</div>
+    <button id="fieldListenBtn" class="primary big" style="margin-top:12px">🎤 Speak value</button>
     <div class="grid2" style="margin-top:10px">
-      <button class="success big" id="saveProgressBtn">✓ Save this run information</button>
-      <button class="danger" id="cancelSpeechBtn">Cancel</button>
+      <input id="fieldManual" placeholder="Or type the value">
+      <button id="fieldSaveBtn" class="secondary">Save typed value</button>
     </div>
-  </div>
-
-  <div id="confirmPanel" class="card hidden">
-    <h2 id="confirmTitle">Confirm extracted information</h2>
-    <div class="muted small">Correct anything that was misunderstood. Blank setup fields remain unchanged.</div>
-    <div id="fieldsGrid" class="extractGrid" style="margin-top:10px"></div>
-    <div class="grid2" style="margin-top:12px">
-      <button class="success big" id="saveExtractedBtn">✓ Confirm & Save</button>
-      <button class="secondary big" id="backToSpeechBtn">← Edit speech</button>
-    </div>
+    <button id="fieldCancelBtn" class="danger big" style="margin-top:10px">Cancel</button>
   </div>
 
   <div id="runSummary" class="card hidden">
@@ -166,405 +112,154 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
     <div id="timeline" class="timeline" style="margin-top:12px"></div>
   </div>
 
-  <div class="footer">Track Assistant V2.3 · Progressive Voice Capture · Session data stays in this browser</div>
+  <div class="footer">Track Assistant V2.4 · Click-to-record · Local prototype</div>
 </div>
+
+<style>
+.reminderChips{display:flex;gap:8px;flex-wrap:wrap}
+.fieldChip{border:1px solid #35404f;background:#1a212b;color:#aeb9c8;border-radius:999px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer}
+.fieldChip.inherited{border-color:#6a57bb;background:#211c37;color:#d5ccff}
+.fieldChip.recorded{border-color:#2c9f6d;background:#132c22;color:#8bf0bd}
+.fieldChip.auto{border-color:#8d6c2e;background:#2b2314;color:#ffd68b}
+.fieldChip .v{font-weight:900}
+</style>
 
 <script>
 const $=id=>document.getElementById(id);
-let session=null, speechMode=null, pendingParsed=null, recognition=null, speechAccumText='', speechAccumParsed={}, currentVoicePass='';
+let session=null, recognition=null, activeField=null, activePhase='pre';
 
 const setupKeys=['category','podHeight','diffType','body','motor','battery','rotofan','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg'];
-const labels={
- trackTemp:'Track temperature °C',airTemp:'Air temperature °C',humidity:'Humidity %',category:'Category',podHeight:'Chassis pod height',diffType:'Diff type',body:'Carro / body',motor:'Motor',battery:'Lipo no.',rotofan:'RotoFan',motorBefore:'Motor temp before °C',motorAfter:'Motor temp after °C',gearRatio:'Gear ratio',frontTires:'Front tires',rearTires:'Rear tires',trd:'TRD no.',avd:'AVD tyre diameter mm',avgDia:'AVG tyre diameter mm',ard:'ARD tyre diameter mm',arg:'ARG tyre diameter mm',laps:'No. laps',targetLaps:'Tours @ target time',totalTime:'Total time (seconds)',averageLap:'Average lap',bestLap:'Best lap',lapDelta:'Best→Avg delta',notes:'Notes',purpose:'Purpose',observations:'Observations',conclusion:'Possible conclusion'
-};
+const preFields=[
+ ['trackTemp','Track temperature','number'],['airTemp','Air temperature','number'],['humidity','Humidity','number'],
+ ['motorBefore','Motor temp before','number'],['category','Category','text'],['podHeight','Pod height','text'],
+ ['diffType','Diff type','text'],['body','Body / Carro','text'],['motor','Motor','text'],['battery','LiPo no.','text'],
+ ['rotofan','RotoFan','text'],['gearRatio','Gear ratio','text'],['frontTires','Front tires','text'],['rearTires','Rear tires','text'],
+ ['trd','TRD no.','text'],['avd','AVD Ø mm','number'],['avgDia','AVG Ø mm','number'],['ard','ARD Ø mm','number'],['arg','ARG Ø mm','number'],
+ ['purpose','Purpose','text'],['notes','Notes','text']
+];
+const postFields=[
+ ['motorAfter','Motor temp after','number'],['laps','No. laps','number'],['targetLaps','Tours @ target time','number'],
+ ['totalTime','Total time','time'],['bestLap','Best lap','number'],['purpose','Purpose','text'],['observations','Observations','text'],
+ ['conclusion','Possible conclusion','text'],['notes','Notes','text']
+];
+const autoPost=[['averageLap','Average lap'],['lapDelta','Lap delta'],['motorDelta','Motor ΔT']];
 
 function uid(){return (crypto.randomUUID&&crypto.randomUUID())||('id-'+Date.now()+'-'+Math.random())}
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function nowISO(){return new Date().toISOString()}
 function tick(){$('clock').textContent=new Date().toLocaleString([], {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'})} setInterval(tick,1000);tick();
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function activeCar(){return session?.cars?.find(c=>c.id===session.activeCarId)||null}
 function currentOpenRun(){return session?.runs?.find(r=>!r.completed&&r.carId===session.activeCarId)||null}
 function carById(id){return session?.cars?.find(c=>c.id===id)}
-function save(){if(session)localStorage.setItem('trackAssistantV21',JSON.stringify(session));render()}
-function load(){try{session=JSON.parse(localStorage.getItem('trackAssistantV21'))}catch(e){}render()}
-
-function newRunForCar(){
-  if(!session||!activeCar())return null;
-  let r=currentOpenRun();
-  if(r)return r;
-  r={id:uid(),runNo:session.nextRunNo++,carId:activeCar().id,createdAt:nowISO(),pre:{},post:{},effectiveSetup:{...activeCar().setup},completed:false};
-  session.runs.push(r); save(); return r;
-}
-function cleanNum(v){if(v==null||v==='')return null;const n=Number(String(v).replace(',','.'));return Number.isFinite(n)?n:null}
-function parseTotalSeconds(text){
- const t=String(text).toLowerCase().replace(/,/g,'.');
+function save(){if(session)localStorage.setItem('trackAssistantV24',JSON.stringify(session));render()}
+function load(){try{session=JSON.parse(localStorage.getItem('trackAssistantV24'))}catch(e){}render()}
+function cleanNum(v){if(v==null||v==='')return null;const m=String(v).replace(',','.').match(/-?\d+(?:\.\d+)?/);return m?Number(m[0]):null}
+function parseTime(v){
+ const t=String(v).toLowerCase().replace(/,/g,'.');
  let m=t.match(/(\d+)\s*:\s*(\d+(?:\.\d+)?)/); if(m)return Number(m[1])*60+Number(m[2]);
- m=t.match(/(\d+(?:\.\d+)?)\s*(?:minutes?|mins?|min)\D{0,15}(\d+(?:\.\d+)?)?\s*(?:seconds?|secs?|sec|s)?/);
- if(m)return Number(m[1])*60+Number(m[2]||0);
- m=t.match(/total\s+(?:time\s+)?(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|sec|s)/); if(m)return Number(m[1]);
- return null;
+ m=t.match(/(\d+(?:\.\d+)?)\s*(?:minutes?|mins?|min)\D{0,15}(\d+(?:\.\d+)?)?/); if(m)return Number(m[1])*60+Number(m[2]||0);
+ const n=Number(t); return Number.isFinite(n)?n:null;
 }
-function firstNumberAfter(t,patterns){
- for(const p of patterns){const m=t.match(p);if(m)return cleanNum(m[1])} return null
+function fmtTime(s){if(!Number.isFinite(Number(s)))return'—';s=Number(s);const m=Math.floor(s/60),sec=s-m*60;return `${m}:${sec.toFixed(2).padStart(5,'0')}`}
+function fmtLap(v){return Number.isFinite(Number(v))?Number(v).toFixed(3):'—'}
+function makeRun(){
+ let r=currentOpenRun(); if(r)return r;
+ r={id:uid(),runNo:session.nextRunNo++,carId:activeCar().id,createdAt:nowISO(),pre:{},post:{},effectiveSetup:{...activeCar().setup},completed:false};
+ session.runs.push(r); save(); return r;
 }
-function captureTextAfter(t, regex, stops){
- const m=t.match(regex);if(!m)return null;
- let x=m[1].trim();
- if(stops){const stop=new RegExp('\\b(?:'+stops.join('|')+')\\b','i');x=x.split(stop)[0].trim()}
- return x.replace(/[.,;]+$/,'').trim()||null;
-}
-function yesNoFrom(t,key){
- const rx=new RegExp('\\b'+key+'\\b[^.;,]*','i'),m=t.match(rx);if(!m)return null;const x=m[0].toLowerCase();
- if(/\b(on|yes|with|fitted|installed)\b/.test(x))return 'Yes';
- if(/\b(off|no|without|removed)\b/.test(x))return 'No';
- return null;
-}
-function parseDiameters(t,out){
- const specs=[
-  ['avd',/\b(?:avd|front right|front-right)\b[^0-9-]*(-?\d+(?:[.,]\d+)?)/i],
-  ['avgDia',/\b(?:avg diameter|avg tyre|avg tire|avg\b|front left|front-left)\b[^0-9-]*(-?\d+(?:[.,]\d+)?)/i],
-  ['ard',/\b(?:ard|rear right|rear-right)\b[^0-9-]*(-?\d+(?:[.,]\d+)?)/i],
-  ['arg',/\b(?:arg|rear left|rear-left)\b[^0-9-]*(-?\d+(?:[.,]\d+)?)/i]
- ];
- specs.forEach(([k,r])=>{const m=t.match(r);if(m)out[k]=cleanNum(m[1])});
-}
-function parseFree(text,mode){
- const raw=String(text||'').trim(), t=raw.toLowerCase().replace(/,/g,'.');
- const out={_raw:raw};
- // Allow naming/switching car in speech.
- if(session?.cars){for(const c of session.cars){if(t.includes(c.name.toLowerCase()))out._carId=c.id}}
- if(mode==='pre'){
-   let v;
-   v=firstNumberAfter(t,[/\btrack(?: temperature| temp)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/]); if(v!=null)out.trackTemp=v;
-   v=firstNumberAfter(t,[/\bair(?: temperature| temp)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/]); if(v!=null)out.airTemp=v;
-   v=firstNumberAfter(t,[/\bhumidity\b[^0-9-]*(-?\d+(?:\.\d+)?)/]); if(v!=null)out.humidity=v;
-   v=firstNumberAfter(t,[/\bmotor(?: temperature| temp)?\s*(?:before|pre[- ]?run|starting)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/,/\bbefore(?: run)?\b[^0-9-]*(-?\d+(?:\.\d+)?)\s*(?:degrees?|°)?/]); if(v!=null)out.motorBefore=v;
-   v=firstNumberAfter(t,[/\bpod(?: height)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/]); if(v!=null)out.podHeight=v;
-   v=firstNumberAfter(t,[/\b(?:lipo|battery)(?: number| no| id)?\b[^0-9-]*([0-9]+(?:\.[0-9]+)?)/]); if(v!=null)out.battery=String(v);
-   v=firstNumberAfter(t,[/\btrd(?: number| no)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/]); if(v!=null)out.trd=String(v);
-   let m=t.match(/\b(?:gear|gear ratio|ratio)\b[^0-9]*([0-9]{1,2})\s*(?:\/|to|[- ])\s*([0-9]{2})\b/);if(m)out.gearRatio=m[1]+'/'+m[2];
-   let yn=yesNoFrom(t,'rotofan'); if(yn)out.rotofan=yn;
-   parseDiameters(t,out);
-   const stops=['air','track','humidity','motor','battery','lipo','rotofan','gear','ratio','front','rear','trd','pod','diff','body','carro','purpose','notes'];
-   let x=captureTextAfter(raw,/\b(?:front tires?|front tyres?)\s*(?:are|is|:)?\s*([^.;]+)/i,stops);if(x)out.frontTires=x;
-   x=captureTextAfter(raw,/\b(?:rear tires?|rear tyres?)\s*(?:are|is|:)?\s*([^.;]+)/i,stops);if(x)out.rearTires=x;
-   x=captureTextAfter(raw,/\b(?:diff|differential)(?: type)?\s*(?:is|:)?\s*([^.;]+)/i,['air','track','humidity','motor','battery','lipo','gear','front','rear','trd','pod','body','carro']);if(x)out.diffType=x;
-   x=captureTextAfter(raw,/\b(?:body|carro)\s*(?:is|:)?\s*([^.;]+)/i,['air','track','humidity','motor','battery','lipo','gear','front','rear','trd','pod','diff']);if(x)out.body=x;
-   // Motor model only when not followed by temp/before/after.
-   const mm=raw.match(/\bmotor\s+(?!temp(?:erature)?\b|before\b|after\b)([^.;]+)/i);
-   if(mm){let y=mm[1].split(/\b(?:air|track|humidity|battery|lipo|rotofan|gear|front|rear|trd|pod|diff|body|carro)\b/i)[0].trim();if(y&&!/^\d+(?:\.\d+)?\s*(?:degrees?|°)/i.test(y))out.motor=y}
-   x=captureTextAfter(raw,/\b(?:category|class)\s*(?:is|:)?\s*([^.;]+)/i,['air','track','humidity','motor','battery','lipo','gear','front','rear']);if(x)out.category=x;
-   x=captureTextAfter(raw,/\bpurpose\s*(?:is|was|:)?\s*([^.;]+)/i);if(x)out.purpose=x;
-   x=captureTextAfter(raw,/\bnotes?\s*(?:are|is|:)?\s*([^.;]+)/i);if(x)out.notes=x;
- }
- if(mode==='post'){
-   let v;
-   v=firstNumberAfter(t,[/\bmotor(?: temperature| temp)?\s*(?:after|post[- ]?run|finished|finish)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/]);if(v!=null)out.motorAfter=v;
-   v=firstNumberAfter(t,[/\b([0-9]+)\s*laps?\b/,/\blaps?\b[^0-9]*([0-9]+)/]);if(v!=null)out.laps=v;
-   v=firstNumberAfter(t,[/\b(?:tours?|laps?)\s*(?:at|@)\s*(?:target(?: time)?|target)\b[^0-9]*([0-9]+)/,/\btarget(?: laps?| time)?\b[^0-9]*([0-9]+)/]);if(v!=null)out.targetLaps=v;
-   v=firstNumberAfter(t,[/\bbest(?: lap| tour)?\b[^0-9]*([0-9]+(?:\.\d+)?)/,/\bmeilleur(?: tour)?\b[^0-9]*([0-9]+(?:\.\d+)?)/]);if(v!=null)out.bestLap=v;
-   const sec=parseTotalSeconds(raw); if(sec!=null)out.totalTime=sec;
-   let x=captureTextAfter(raw,/\bpurpose\s*(?:is|was|:)?\s*([^.;]+)/i,['observation','observations','conclusion','notes']);if(x)out.purpose=x;
-   x=captureTextAfter(raw,/\bobservations?\s*(?:are|were|was|:)?\s*([^.;]+)/i,['conclusion','notes','purpose']);if(x)out.observations=x;
-   x=captureTextAfter(raw,/\b(?:possible\s+)?conclusion\s*(?:is|was|:)?\s*([^.;]+)/i,['notes','purpose','observation']);if(x)out.conclusion=x;
-   x=captureTextAfter(raw,/\bnotes?\s*(?:are|were|was|:)?\s*([^.;]+)/i,['purpose','observation','conclusion']);if(x)out.notes=x;
-   // Natural phrases without labels.
-   if(!out.conclusion){
-     const km=raw.match(/\b(?:keep it|keep this|reject it|retest|test again|better overall|worse overall)\b[^.;]*/i);
-     if(km)out.conclusion=km[0].trim();
-   }
- }
- return out;
-}
-
-
-const reminderGroupsPre=[
- {name:'Conditions',fields:['trackTemp','airTemp','humidity']},
- {name:'Pre-run measurement',fields:['motorBefore']},
- {name:'Car / Setup',fields:['category','podHeight','diffType','body','motor','battery','rotofan','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg']},
- {name:'Test',fields:['purpose','notes']}
-];
-const reminderGroupsPost=[
- {name:'After Run',fields:['motorAfter','laps','targetLaps','totalTime','bestLap']},
- {name:'Test',fields:['purpose','observations','conclusion','notes']},
- {name:'Calculated automatically',fields:['averageLap','lapDelta','motorDelta'],auto:true}
-];
-const shortLabels={
- trackTemp:'Track temp',airTemp:'Air temp',humidity:'Humidity',motorBefore:'Motor temp before',
- category:'Category',podHeight:'Pod height',diffType:'Diff',body:'Body',motor:'Motor',battery:'LiPo',
- rotofan:'RotoFan',gearRatio:'Gear ratio',frontTires:'Front tires',rearTires:'Rear tires',trd:'TRD',
- avd:'AVD Ø',avgDia:'AVG Ø',ard:'ARD Ø',arg:'ARG Ø',purpose:'Purpose',notes:'Notes',
- motorAfter:'Motor temp after',laps:'No. laps',targetLaps:'Laps @ target',totalTime:'Total time',
- bestLap:'Best lap',observations:'Observations',conclusion:'Conclusion',averageLap:'Average lap',
- lapDelta:'Lap delta',motorDelta:'Motor ΔT'
-};
-function displayReminderValue(k,v){
+function formatVal(k,v){
  if(v==null||v==='')return '';
- if(['trackTemp','airTemp','motorBefore','motorAfter'].includes(k))return `${v}°`;
- if(k==='humidity')return `${v}%`;
- if(['avd','avgDia','ard','arg','podHeight'].includes(k))return `${v} mm`;
+ if(['trackTemp','airTemp','motorBefore','motorAfter'].includes(k))return v+'°';
+ if(k==='humidity')return v+'%';
+ if(['avd','avgDia','ard','arg'].includes(k))return v+' mm';
  if(k==='totalTime')return fmtTime(v);
+ if(['averageLap','lapDelta','bestLap'].includes(k))return fmtLap(v);
+ if(k==='motorDelta')return Number(v).toFixed(1)+'°';
  return String(v);
 }
-function updateReminders(mode,text=''){
- if(!$('reminderGroups'))return;
- const groups=mode==='pre'?reminderGroupsPre:reminderGroupsPost;
- const parsed=text?parseFree(text,mode):{};
- const c=activeCar(), setup=c?.setup||{};
- const r=currentOpenRun();
- $('reminderGroups').innerHTML='';
- groups.forEach((g,gi)=>{
-   const details=document.createElement('details');details.className='reminderGroup';details.open=true;
-   const summary=document.createElement('summary');summary.textContent=g.name;details.appendChild(summary);
-   const chips=document.createElement('div');chips.className='reminderChips';
-   g.fields.forEach(k=>{
-     const chip=document.createElement('span');chip.className='reminderChip';chip.dataset.reminderKey=k;
-     let state='', value=null;
-     if(g.auto){state='auto';}
-     else if(parsed[k]!=null){state='detected';value=parsed[k];}
-     else if(mode==='pre' && setupKeys.includes(k) && setup[k]!=null){state='inherited';value=setup[k];}
-     else if(mode==='pre' && r?.pre?.[k]!=null){state='detected';value=r.pre[k];}
-     else if(mode==='post' && r?.post?.[k]!=null){state='detected';value=r.post[k];}
-     if(state)chip.classList.add(state);
-     let prefix=state==='detected'?'✓ ':state==='inherited'?'✓ ':state==='auto'?'AUTO · ':'';
-     let txt=prefix+(shortLabels[k]||labels[k]||k);
-     const dv=displayReminderValue(k,value);
-     if(dv)txt+=` <span class="rv">· ${esc(dv)}</span>`;
-     chip.innerHTML=txt;
-     chips.appendChild(chip);
-   });
-   details.appendChild(chips);$('reminderGroups').appendChild(details);
+function renderFieldChips(phase){
+ const r=currentOpenRun(), c=activeCar(), fields=phase==='pre'?preFields:postFields, target=phase==='pre'?$('preFields'):$('postFields');
+ target.innerHTML='';
+ fields.forEach(([k,label,type])=>{
+   let value=phase==='pre'?r?.pre?.[k]:r?.post?.[k];
+   let inherited=null;
+   if(phase==='pre'&&setupKeys.includes(k)&&value==null&&c?.setup?.[k]!=null) inherited=c.setup[k];
+   const b=document.createElement('button'); b.className='fieldChip';
+   if(value!=null&&value!=='')b.classList.add('recorded'); else if(inherited!=null)b.classList.add('inherited');
+   b.innerHTML=(value!=null&&value!==''?'✓ ':inherited!=null?'✓ ':'')+esc(label)+(value!=null&&value!==''?` · <span class="v">${esc(formatVal(k,value))}</span>`:inherited!=null?` · <span class="v">${esc(inherited)}</span>`:'');
+   b.onclick=()=>openField(phase,k,label,type);
+   target.appendChild(b);
  });
-}
-
-const preFields=['trackTemp','airTemp','humidity','category','podHeight','diffType','body','motor','battery','rotofan','motorBefore','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg','purpose','notes'];
-const postFields=['motorAfter','laps','targetLaps','totalTime','bestLap','purpose','observations','conclusion','notes'];
-
-function fieldType(k){return ['trackTemp','airTemp','humidity','podHeight','motorBefore','motorAfter','avd','avgDia','ard','arg','laps','targetLaps','totalTime','bestLap'].includes(k)?'number':'text'}
-
-function mergeParsed(base,add){
- const out={...(base||{})};
- Object.entries(add||{}).forEach(([k,v])=>{if(k!=='_raw' && k!=='_carId' && v!=null && v!=='')out[k]=v});
- if(add?._carId)out._carId=add._carId;
- out._raw=speechAccumText;
- return out;
-}
-function renderLiveFields(){
- const fields=speechMode==='pre'?preFields:postFields;
- const setup=activeCar()?.setup||{};
- const r=currentOpenRun();
- $('liveFieldsGrid').innerHTML='';
- let captured=0;
- fields.forEach(k=>{
-   const wrap=document.createElement('div');wrap.className='progressField';
-   const lab=document.createElement('label');lab.textContent=labels[k]||k;wrap.appendChild(lab);
-   const multiline=['notes','purpose','observations','conclusion'].includes(k);
-   const inp=document.createElement(multiline?'textarea':'input');
-   if(!multiline) inp.type=fieldType(k);
-   inp.dataset.liveKey=k;
-   let val=speechAccumParsed[k];
-   if(val!=null&&val!==''){inp.value=val;captured++}
-   else if(speechMode==='pre'&&setupKeys.includes(k)&&setup[k]!=null){inp.placeholder='Inherited: '+setup[k]}
-   else if(speechMode==='pre'&&r?.pre?.[k]!=null){inp.placeholder='Already saved: '+r.pre[k]}
-   else if(speechMode==='post'&&r?.post?.[k]!=null){inp.placeholder='Already saved: '+r.post[k]}
-   else inp.placeholder='Not mentioned';
-   inp.addEventListener('input',()=>{
-     const key=inp.dataset.liveKey;
-     if(inp.value.trim()==='') delete speechAccumParsed[key];
-     else speechAccumParsed[key]=fieldType(key)==='number'?cleanNum(inp.value):inp.value.trim();
-     updateCaptureCounter();
-     updateReminders(speechMode,speechAccumText);
+ if(phase==='post'){
+   autoPost.forEach(([k,label])=>{
+     const v=r?.post?.[k], b=document.createElement('button'); b.className='fieldChip auto'; b.disabled=true;
+     b.innerHTML='AUTO · '+esc(label)+(v!=null?` · <span class="v">${esc(formatVal(k,v))}</span>`:'');
+     target.appendChild(b);
    });
-   wrap.appendChild(inp);$('liveFieldsGrid').appendChild(wrap);
- });
- updateCaptureCounter();
-}
-function updateCaptureCounter(){
- const count=(speechMode==='pre'?preFields:postFields).filter(k=>speechAccumParsed[k]!=null&&speechAccumParsed[k]!=='').length;
- $('captureCounter').textContent=`${count} field${count===1?'':'s'}`;
-}
-function absorbText(text){
- speechAccumText=String(text||'').trim();
- speechAccumParsed=mergeParsed(speechAccumParsed,parseFree(speechAccumText,speechMode));
- if(speechAccumParsed._carId && speechAccumParsed._carId!==session.activeCarId){
-   session.activeCarId=speechAccumParsed._carId;render();
  }
- $('transcriptBox').textContent=speechAccumText||'Nothing yet.';
- $('transcriptEdit').value=speechAccumText;
- updateReminders(speechMode,speechAccumText);
- renderLiveFields();
 }
-function gatherLiveFields(){
- const out={_raw:speechAccumText};
- document.querySelectorAll('#liveFieldsGrid [data-live-key]').forEach(inp=>{
-   const v=inp.value.trim(); if(v!=='')out[inp.dataset.liveKey]=fieldType(inp.dataset.liveKey)==='number'?cleanNum(v):v;
- });
- if(speechAccumParsed._carId)out._carId=speechAccumParsed._carId;
- return out;
+function openField(phase,k,label,type){
+ activePhase=phase; activeField={k,label,type};
+ const r=makeRun(), c=activeCar();
+ let cur=phase==='pre'?r.pre[k]:r.post[k];
+ if(cur==null&&phase==='pre'&&setupKeys.includes(k))cur=c.setup[k];
+ $('fieldGroup').textContent=phase==='pre'?'PRE-RUN':'POST-RUN';
+ $('fieldPrompt').textContent=label;
+ $('fieldCurrent').textContent=cur!=null?'Current / inherited: '+formatVal(k,cur):'No value recorded yet.';
+ $('fieldManual').value='';
+ $('fieldRecorder').classList.remove('hidden');
+ $('fieldRecorder').scrollIntoView({behavior:'smooth',block:'start'});
 }
-
-function buildConfirm(parsed,mode){
- pendingParsed=parsed;
- if(parsed._carId&&parsed._carId!==session.activeCarId){session.activeCarId=parsed._carId;render()}
- const fields=mode==='pre'?preFields:postFields;
- $('confirmTitle').textContent=(mode==='pre'?'Pre-run':'Post-run')+' · Confirm extracted information';
- $('fieldsGrid').innerHTML='';
- const setup=activeCar()?.setup||{};
- fields.forEach(k=>{
-   let val=parsed[k];
-   const current=setup[k];
-   const inherited=(mode==='pre'&&setupKeys.includes(k)&&val==null&&current!=null);
-   const wrap=document.createElement('div');wrap.className='field';
-   const lab=document.createElement('label');lab.textContent=labels[k]||k;wrap.appendChild(lab);
-   const inp=document.createElement(k==='notes'||k==='purpose'||k==='observations'||k==='conclusion'?'textarea':'input');
-   if(inp.tagName==='INPUT') inp.type=fieldType(k);
-   inp.dataset.key=k;
-   if(val!=null)inp.value=val;
-   else if(inherited){inp.placeholder='Inherited: '+current;inp.dataset.inherited='1'}
-   else inp.placeholder='Not mentioned';
-   wrap.appendChild(inp);
-   $('fieldsGrid').appendChild(wrap);
- });
- $('speechPanel').classList.add('hidden');$('confirmPanel').classList.remove('hidden');$('confirmPanel').scrollIntoView({behavior:'smooth',block:'start'});
+function saveField(raw){
+ if(!activeField)return;
+ const {k,type}=activeField;
+ let v=String(raw??'').trim(); if(!v)return;
+ if(type==='number')v=cleanNum(v);
+ if(type==='time')v=parseTime(v);
+ if(v==null){alert('I could not understand that value. Try typing it.');return}
+ const r=makeRun(), c=activeCar();
+ if(activePhase==='pre'){
+   r.pre[k]=v;
+   if(setupKeys.includes(k))c.setup[k]=v;
+   r.effectiveSetup={...c.setup};
+ }else r.post[k]=v;
+ $('fieldRecorder').classList.add('hidden'); activeField=null; save();
+ if(activePhase==='pre')$('preCard').scrollIntoView({behavior:'smooth',block:'start'}); else $('postCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function gatherConfirm(){
- const out={_raw:pendingParsed?._raw||''};
- document.querySelectorAll('#fieldsGrid [data-key]').forEach(inp=>{if(inp.value.trim()!=='')out[inp.dataset.key]=fieldType(inp.dataset.key)==='number'?cleanNum(inp.value):inp.value.trim()});
- return out;
-}
-
-function startSpeech(mode){
- if(!session)return;
- speechMode=mode;
- if(mode==='pre')newRunForCar();
- $('speechTitle').textContent=mode==='pre'?`Run ${currentOpenRun().runNo} · PRE-RUN free speech`:`Run ${currentOpenRun()?.runNo||'—'} · POST-RUN free speech`;
- $('speechHint').textContent=mode==='pre'
- ?'Say conditions, setup or changes in any order. You can mention only what changed.'
- :'Say motor-after temperature, laps, total time, best lap, purpose, observations and conclusion in any order.';
- speechAccumText=''; speechAccumParsed={}; currentVoicePass='';
- $('transcriptBox').textContent='Nothing yet.';$('transcriptEdit').value='';$('speechPanel').classList.remove('hidden');$('confirmPanel').classList.add('hidden');$('runSummary').classList.add('hidden');
- updateReminders(mode,''); renderLiveFields();
- $('saveProgressBtn').textContent=mode==='pre'?'✓ Save PRE-RUN':'✓ Save POST-RUN';
- $('speechPanel').scrollIntoView({behavior:'smooth',block:'start'});
-}
-function commitPre(vals){
- let r=currentOpenRun();if(!r)r=newRunForCar();
- const c=activeCar();
- r.pre={...r.pre,...vals};
- setupKeys.forEach(k=>{if(vals[k]!=null&&vals[k]!=='')c.setup[k]=vals[k]});
- r.effectiveSetup={...c.setup};
- r.preRaw=vals._raw||'';
- r.preparedAt=nowISO();r.date=new Date().toLocaleDateString();r.time=new Date().toLocaleTimeString();
- if(vals.purpose)r.pre.purpose=vals.purpose;if(vals.notes)r.pre.notes=vals.notes;
- save();$('confirmPanel').classList.add('hidden');$('postBtn').disabled=false;
- window.scrollTo({top:0,behavior:'smooth'});
-}
-function commitPost(vals){
- const r=currentOpenRun();if(!r){alert('Prepare a run first.');return}
- r.post={...r.post,...vals};r.postRaw=vals._raw||'';r.finishedAt=nowISO();
- const laps=cleanNum(r.post.laps),total=cleanNum(r.post.totalTime),best=cleanNum(r.post.bestLap),mb=cleanNum(r.pre.motorBefore),ma=cleanNum(r.post.motorAfter);
- if(laps&&total)r.post.averageLap=total/laps;
- if(r.post.averageLap!=null&&best!=null)r.post.lapDelta=r.post.averageLap-best;
- if(mb!=null&&ma!=null)r.post.motorDelta=ma-mb;
- r.completed=true;
- save();$('confirmPanel').classList.add('hidden');showRunSummary(r);
-}
-function fmtLap(v){return Number.isFinite(Number(v))?Number(v).toFixed(3):'—'}
-function fmtTime(s){if(!Number.isFinite(Number(s)))return'—';s=Number(s);const m=Math.floor(s/60),sec=s-m*60;return `${m}:${sec.toFixed(2).padStart(5,'0')}`}
-function showRunSummary(r){
- const c=carById(r.carId),carRuns=session.runs.filter(x=>x.completed&&x.carId===r.carId);
- const avgs=carRuns.map(x=>Number(x.post.averageLap)).filter(Number.isFinite),bests=carRuns.map(x=>Number(x.post.bestLap)).filter(Number.isFinite);
- const bestAvg=avgs.length?Math.min(...avgs):null,bestLap=bests.length?Math.min(...bests):null;
- $('runSummaryTitle').textContent=`Run ${r.runNo} saved · ${c?.name||''}`;
- const ms=[
-  ['Laps',r.post.laps??'—'],
-  ['Average',fmtLap(r.post.averageLap)],
-  ['Best lap',fmtLap(r.post.bestLap)],
-  ['Motor ΔT',Number.isFinite(Number(r.post.motorDelta))?Number(r.post.motorDelta).toFixed(1)+'°C':'—']
- ];
- $('summaryMetrics').innerHTML=ms.map(([l,n])=>`<div class="metric"><div class="l">${esc(l)}</div><div class="n">${esc(n)}</div></div>`).join('');
- let text=[];
- if(bestAvg!=null&&Number.isFinite(Number(r.post.averageLap)))text.push(Number(r.post.averageLap)<=bestAvg+0.0005?'★ Best average for this car':`${(Number(r.post.averageLap)-bestAvg).toFixed(3)} s off this car's best average`);
- if(bestLap!=null&&Number.isFinite(Number(r.post.bestLap)))text.push(Number(r.post.bestLap)<=bestLap+0.0005?'★ Best lap for this car':`${(Number(r.post.bestLap)-bestLap).toFixed(3)} s off this car's best lap`);
- if(r.post.purpose||r.pre.purpose)text.push(`<b>Purpose:</b> ${esc(r.post.purpose||r.pre.purpose)}`);
- if(r.post.observations)text.push(`<b>Observation:</b> ${esc(r.post.observations)}`);
- if(r.post.conclusion)text.push(`<b>Conclusion:</b> ${esc(r.post.conclusion)}`);
- $('summaryText').innerHTML=text.map(x=>`<div style="margin:6px 0">${x}</div>`).join('');
- $('runSummary').classList.remove('hidden');$('runSummary').scrollIntoView({behavior:'smooth',block:'start'});
-}
-
 function render(){
- if(!session){$('nextRunNo').textContent='1';$('activeCarLabel').textContent='No active session';$('sessionMeta').textContent='Create a testing session to begin.';['carBar','mainControls','historyCard'].forEach(id=>$(id).classList.add('hidden'));return}
- const c=activeCar();
- $('nextRunNo').textContent=currentOpenRun()?.runNo||session.nextRunNo;
- $('activeCarLabel').textContent=c?.name||'No car';
- $('sessionMeta').textContent=`${session.track||'Track'}${session.layout?' · '+session.layout:''} · ${session.duration} min runs · ${session.runs.filter(r=>r.completed).length} completed`;
- $('carBar').classList.remove('hidden');$('mainControls').classList.remove('hidden');$('historyCard').classList.remove('hidden');
- $('carSelect').innerHTML=session.cars.map(x=>`<option value="${esc(x.id)}"${x.id===session.activeCarId?' selected':''}>${esc(x.name)}${x.category?' · '+esc(x.category):''}</option>`).join('');
- $('postBtn').disabled=!currentOpenRun()?.preparedAt;
- const runs=[...session.runs].filter(r=>r.completed).sort((a,b)=>b.runNo-a.runNo);
- $('timeline').innerHTML=runs.length?runs.map(r=>{
-  const c=carById(r.carId),bits=[];
-  if(r.post.laps!=null)bits.push(`${r.post.laps} laps`);
-  if(r.post.averageLap!=null)bits.push(`Avg ${fmtLap(r.post.averageLap)}`);
-  if(r.post.bestLap!=null)bits.push(`Best ${fmtLap(r.post.bestLap)}`);
-  if(r.post.lapDelta!=null)bits.push(`Δ ${fmtLap(r.post.lapDelta)}`);
-  return `<div class="runItem"><div class="runHead"><strong>Run ${r.runNo} · ${esc(c?.name||'')}</strong><span class="small muted">${esc(r.time||'')}</span></div><div class="chips">${bits.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>${r.post.purpose||r.pre.purpose?`<div class="small muted" style="margin-top:7px">Purpose: ${esc(r.post.purpose||r.pre.purpose)}</div>`:''}${r.post.conclusion?`<div class="small" style="margin-top:4px">Conclusion: ${esc(r.post.conclusion)}</div>`:''}</div>`
- }).join(''):'<div class="muted">No completed runs yet.</div>';
-}
-
-$('newSessionBtn').onclick=()=>{
- if(session&&session.runs?.length&&!confirm('Start a brand-new session? Export the current session first if you want a CSV copy.'))return;
- $('sessionPanel').classList.remove('hidden');$('sessionPanel').scrollIntoView({behavior:'smooth',block:'start'});
-};
-$('createSessionBtn').onclick=()=>{
- const name=$('firstCarInput').value.trim()||'Car 1',cat=$('firstClassInput').value.trim(),id=uid();
- session={id:uid(),createdAt:nowISO(),track:$('trackInput').value.trim(),layout:$('layoutInput').value.trim(),duration:Number($('durationInput').value),notes:$('sessionNotesInput').value.trim(),nextRunNo:1,activeCarId:id,cars:[{id,name,category:cat,setup:{category:cat}}],runs:[]};
- $('sessionPanel').classList.add('hidden');save();
-};
-$('carSelect').onchange=()=>{session.activeCarId=$('carSelect').value;save();window.scrollTo({top:0,behavior:'smooth'})};
-$('addCarBtn').onclick=()=>{$('addCarPanel').classList.remove('hidden');$('addCarPanel').scrollIntoView({behavior:'smooth',block:'start'})};
-$('createCarBtn').onclick=()=>{const name=$('newCarName').value.trim();if(!name)return alert('Enter a car name.');const id=uid(),cat=$('newCarClass').value.trim();session.cars.push({id,name,category:cat,setup:{category:cat}});session.activeCarId=id;$('newCarName').value='';$('newCarClass').value='';$('addCarPanel').classList.add('hidden');save()};
-$('preBtn').onclick=()=>startSpeech('pre');$('postBtn').onclick=()=>startSpeech('post');
-$('transcriptEdit').addEventListener('input',()=>{absorbText($('transcriptEdit').value)});
-$('saveProgressBtn').onclick=()=>{
- const vals=gatherLiveFields();
- if(speechMode==='pre')commitPre(vals);else commitPost(vals);
- $('speechPanel').classList.add('hidden');
-};
-$('cancelSpeechBtn').onclick=()=>{$('speechPanel').classList.add('hidden')};
-$('backToSpeechBtn').onclick=()=>{$('confirmPanel').classList.add('hidden');$('speechPanel').classList.remove('hidden')};
-$('saveExtractedBtn').onclick=()=>{const vals=gatherConfirm();speechMode==='pre'?commitPre(vals):commitPost(vals)};
-$('nextRunBtn').onclick=()=>{$('runSummary').classList.add('hidden');window.scrollTo({top:0,behavior:'smooth'})};
-
-function initSpeech(){
- const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
- recognition=new SR();recognition.lang='en-US';recognition.interimResults=true;recognition.continuous=true;
- let final='';
- recognition.onstart=()=>{$('listenBtn').classList.add('listening');$('listenBtn').textContent='■ Stop this voice entry';final='';currentVoicePass=''};
- recognition.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const tx=e.results[i][0].transcript;if(e.results[i].isFinal)final+=tx+' ';else interim+=tx}currentVoicePass=(final+interim).trim();const combined=[speechAccumText,currentVoicePass].filter(Boolean).join(' ').trim();$('transcriptBox').textContent=combined||'Listening…';updateReminders(speechMode,combined);const preview=mergeParsed(speechAccumParsed,parseFree(combined,speechMode));const old=speechAccumParsed;speechAccumParsed=preview;renderLiveFields();speechAccumParsed=preview};
- recognition.onerror=e=>{$('transcriptBox').textContent='Speech error: '+e.error};
- recognition.onend=()=>{
- $('listenBtn').classList.remove('listening');$('listenBtn').textContent='🎤 Add more information';
- if(currentVoicePass){
-   speechAccumText=[speechAccumText,currentVoicePass].filter(Boolean).join(' ').trim();
-   speechAccumParsed=mergeParsed(speechAccumParsed,parseFree(speechAccumText,speechMode));
-   $('transcriptBox').textContent=speechAccumText;
-   $('transcriptEdit').value=speechAccumText;
-   updateReminders(speechMode,speechAccumText);renderLiveFields();
+ if(!session){
+   $('nextRunNo').textContent='1';$('activeCarLabel').textContent='No active session';$('sessionMeta').textContent='Create a testing session to begin.';
+   ['carBar','preCard','postCard','historyCard'].forEach(id=>$(id).classList.add('hidden')); return;
  }
- currentVoicePass='';
-};
+ const c=activeCar(), r=currentOpenRun();
+ $('nextRunNo').textContent=r?.runNo||session.nextRunNo;
+ $('activeCarLabel').textContent=c?.name||'No car';
+ $('sessionMeta').textContent=`${session.track||'Track'}${session.layout?' · '+session.layout:''} · ${session.duration} min runs · ${session.runs.filter(x=>x.completed).length} completed`;
+ $('carBar').classList.remove('hidden');$('preCard').classList.remove('hidden');$('historyCard').classList.remove('hidden');
+ $('carSelect').innerHTML=session.cars.map(x=>`<option value="${esc(x.id)}"${x.id===session.activeCarId?' selected':''}>${esc(x.name)}${x.category?' · '+esc(x.category):''}</option>`).join('');
+ $('preTitle').textContent=`Run ${r?.runNo||session.nextRunNo} · PRE-RUN`;
+ renderFieldChips('pre');
+ if(r?.preparedAt){$('postCard').classList.remove('hidden');$('postTitle').textContent=`Run ${r.runNo} · POST-RUN`;renderFieldChips('post')} else $('postCard').classList.add('hidden');
+ const runs=[...session.runs].filter(x=>x.completed).sort((a,b)=>b.runNo-a.runNo);
+ $('timeline').innerHTML=runs.length?runs.map(x=>{const cc=carById(x.carId);return `<div class="runItem"><div class="runHead"><strong>Run ${x.runNo} · ${esc(cc?.name||'')}</strong><span class="small muted">${esc(x.time||'')}</span></div><div class="chips"><span class="chip">${esc(x.post.laps??'—')} laps</span><span class="chip">Avg ${fmtLap(x.post.averageLap)}</span><span class="chip">Best ${fmtLap(x.post.bestLap)}</span></div></div>`}).join(''):'<div class="muted">No completed runs yet.</div>';
 }
-initSpeech();
-$('listenBtn').onclick=()=>{if(!recognition)return alert('Speech recognition is not available in this browser. You can type the note instead.');try{if($('listenBtn').classList.contains('listening'))recognition.stop();else{speechSynthesis?.cancel();recognition.start()}}catch(e){}};
+$('newSessionBtn').onclick=()=>{$('sessionPanel').classList.remove('hidden');$('sessionPanel').scrollIntoView({behavior:'smooth',block:'start'})};
+$('createSessionBtn').onclick=()=>{const id=uid(),name=$('firstCarInput').value.trim()||'Car 1',cat=$('firstClassInput').value.trim();session={id:uid(),createdAt:nowISO(),track:$('trackInput').value.trim(),layout:$('layoutInput').value.trim(),duration:Number($('durationInput').value),notes:$('sessionNotesInput').value.trim(),nextRunNo:1,activeCarId:id,cars:[{id,name,category:cat,setup:{category:cat}}],runs:[]};$('sessionPanel').classList.add('hidden');save();makeRun()};
+$('carSelect').onchange=()=>{session.activeCarId=$('carSelect').value;save();makeRun();window.scrollTo({top:0,behavior:'smooth'})};
+$('addCarBtn').onclick=()=>{$('addCarPanel').classList.remove('hidden');$('addCarPanel').scrollIntoView({behavior:'smooth',block:'start'})};
+$('createCarBtn').onclick=()=>{const name=$('newCarName').value.trim();if(!name)return alert('Enter a car name.');const id=uid(),cat=$('newCarClass').value.trim();session.cars.push({id,name,category:cat,setup:{category:cat}});session.activeCarId=id;$('addCarPanel').classList.add('hidden');save();makeRun()};
+$('savePreBtn').onclick=()=>{const r=makeRun();r.preparedAt=nowISO();r.date=new Date().toLocaleDateString();r.time=new Date().toLocaleTimeString();save();$('postCard').scrollIntoView({behavior:'smooth',block:'start'})};
+$('savePostBtn').onclick=()=>{const r=currentOpenRun();if(!r)return;const laps=cleanNum(r.post.laps),total=cleanNum(r.post.totalTime),best=cleanNum(r.post.bestLap),mb=cleanNum(r.pre.motorBefore),ma=cleanNum(r.post.motorAfter);if(laps&&total)r.post.averageLap=total/laps;if(r.post.averageLap!=null&&best!=null)r.post.lapDelta=r.post.averageLap-best;if(mb!=null&&ma!=null)r.post.motorDelta=ma-mb;r.completed=true;r.finishedAt=nowISO();save();showSummary(r)};
+function showSummary(r){const c=carById(r.carId),cr=session.runs.filter(x=>x.completed&&x.carId===r.carId),av=cr.map(x=>Number(x.post.averageLap)).filter(Number.isFinite),bl=cr.map(x=>Number(x.post.bestLap)).filter(Number.isFinite),ba=av.length?Math.min(...av):null,bb=bl.length?Math.min(...bl):null;$('runSummaryTitle').textContent=`Run ${r.runNo} saved · ${c?.name||''}`;$('summaryMetrics').innerHTML=[['Laps',r.post.laps??'—'],['Average',fmtLap(r.post.averageLap)],['Best lap',fmtLap(r.post.bestLap)],['Motor ΔT',r.post.motorDelta!=null?Number(r.post.motorDelta).toFixed(1)+'°C':'—']].map(([l,n])=>`<div class="metric"><div class="l">${l}</div><div class="n">${n}</div></div>`).join('');let t=[];if(ba!=null&&r.post.averageLap!=null)t.push(r.post.averageLap<=ba+0.0005?'★ Best average for this car':`${(r.post.averageLap-ba).toFixed(3)} s off best average`);if(bb!=null&&r.post.bestLap!=null)t.push(r.post.bestLap<=bb+0.0005?'★ Best lap for this car':`${(r.post.bestLap-bb).toFixed(3)} s off best lap`);if(r.post.observations)t.push(`<b>Observation:</b> ${esc(r.post.observations)}`);if(r.post.conclusion)t.push(`<b>Conclusion:</b> ${esc(r.post.conclusion)}`);$('summaryText').innerHTML=t.map(x=>`<div style="margin:6px 0">${x}</div>`).join('');$('runSummary').classList.remove('hidden');$('runSummary').scrollIntoView({behavior:'smooth',block:'start'})}
+$('nextRunBtn').onclick=()=>{$('runSummary').classList.add('hidden');makeRun();window.scrollTo({top:0,behavior:'smooth'})};
+$('fieldSaveBtn').onclick=()=>saveField($('fieldManual').value);$('fieldManual').addEventListener('keydown',e=>{if(e.key==='Enter')saveField($('fieldManual').value)});
+$('fieldCancelBtn').onclick=()=>{$('fieldRecorder').classList.add('hidden');activeField=null};
 
-$('exportBtn').onclick=()=>{
- const header=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Chassis pod height','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','tours @ target time','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car'];
- const rows=[header];
- session.runs.filter(r=>r.completed).sort((a,b)=>a.runNo-b.runNo).forEach(r=>{const s=r.effectiveSetup||{},p=r.pre||{},o=r.post||{},c=carById(r.carId);rows.push([r.runNo,r.date||'',r.time||'',p.trackTemp??'',p.airTemp??'',p.humidity??'',s.category??c?.category??'',s.podHeight??'',s.diffType??'',s.body??'',s.motor??'',s.battery??'',s.rotofan??'',p.motorBefore??'',o.motorAfter??'',o.motorDelta??'',s.gearRatio??'',s.frontTires??'',s.rearTires??'',s.trd??'',s.avd??'',s.avgDia??'',s.ard??'',s.arg??'',o.laps??'',o.targetLaps??'',o.totalTime??'',o.averageLap??'',o.bestLap??'',o.lapDelta??'',o.notes??p.notes??'',o.purpose??p.purpose??'',o.observations??'',o.conclusion??'',c?.name??''])});
- const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)
-};
+function initSpeech(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;recognition=new SR();recognition.lang='en-US';recognition.interimResults=false;recognition.continuous=false;recognition.onstart=()=>{$('fieldListenBtn').textContent='🎙 Listening…'};recognition.onend=()=>{$('fieldListenBtn').textContent='🎤 Speak value'};recognition.onerror=e=>{alert('Speech error: '+e.error)};recognition.onresult=e=>{const text=e.results[0][0].transcript;$('fieldCurrent').textContent='Heard: '+text;saveField(text)}}
+initSpeech();$('fieldListenBtn').onclick=()=>{if(!recognition)return alert('Speech recognition not available. Type the value instead.');try{recognition.start()}catch(e){}};
+
+$('exportBtn').onclick=()=>{const header=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Chassis pod height','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','tours @ target time','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car'];const rows=[header];session.runs.filter(r=>r.completed).sort((a,b)=>a.runNo-b.runNo).forEach(r=>{const ss=r.effectiveSetup||{},p=r.pre||{},o=r.post||{},c=carById(r.carId);rows.push([r.runNo,r.date||'',r.time||'',p.trackTemp??'',p.airTemp??'',p.humidity??'',ss.category??c?.category??'',ss.podHeight??'',ss.diffType??'',ss.body??'',ss.motor??'',ss.battery??'',ss.rotofan??'',p.motorBefore??'',o.motorAfter??'',o.motorDelta??'',ss.gearRatio??'',ss.frontTires??'',ss.rearTires??'',ss.trd??'',ss.avd??'',ss.avgDia??'',ss.ard??'',ss.arg??'',o.laps??'',o.targetLaps??'',o.totalTime??'',o.averageLap??'',o.bestLap??'',o.lapDelta??'',o.notes??p.notes??'',o.purpose??p.purpose??'',o.observations??'',o.conclusion??'',c?.name??''])});const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)};
 load();
 </script>
-</body></html>
+</body>
+</html>
