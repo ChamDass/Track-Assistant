@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Track Assistant V2.6 Tap-to-Dictate</title>
+<title>Track Assistant V2.7 Tap-to-Dictate</title>
 <style>
 :root{--bg:#0d1015;--card:#171c24;--card2:#11161d;--line:#2b3340;--text:#f4f7fb;--muted:#95a2b5;--accent:#7c5cff;--ok:#38d18b;--warn:#ffb84d;--danger:#ff6060}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -113,7 +113,7 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
     <div id="timeline" class="timeline" style="margin-top:12px"></div>
   </div>
 
-  <div class="footer">Track Assistant V2.6 · Tap-to-dictate · Local prototype</div>
+  <div class="footer">Track Assistant V2.7 · Export formatting fix · Local prototype</div>
 </div>
 
 <style>
@@ -324,7 +324,35 @@ function initSpeech(){
 }
 initSpeech();
 
-$('exportBtn').onclick=()=>{const header=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Chassis pod height','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car'];const rows=[header];session.runs.filter(r=>r.completed).sort((a,b)=>a.runNo-b.runNo).forEach(r=>{const ss=r.effectiveSetup||{},p=r.pre||{},o=r.post||{},c=carById(r.carId);rows.push([r.runNo,r.date||'',r.time||'',p.trackTemp??'',p.airTemp??'',p.humidity??'',ss.category??c?.category??'',ss.podHeight??'',ss.diffType??'',ss.body??'',ss.motor??'',ss.battery??'',ss.rotofan??'',p.motorBefore??'',o.motorAfter??'',o.motorDelta??'',ss.gearRatio??'',ss.frontTires??'',ss.rearTires??'',ss.trd??'',ss.avd??'',ss.avgDia??'',ss.ard??'',ss.arg??'',o.laps??'',o.totalTime??'',o.averageLap??'',o.bestLap??'',o.lapDelta??'',o.notes??p.notes??'',o.purpose??p.purpose??'',o.observations??'',o.conclusion??'',c?.name??''])});const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)};
+$('exportBtn').onclick=()=>{
+ const header=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Chassis pod height','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car'];
+ const rows=[header];
+ session.runs.filter(r=>r.completed).sort((a,b)=>a.runNo-b.runNo).forEach(r=>{
+   const ss=r.effectiveSetup||{},p=r.pre||{},o=r.post||{},c=carById(r.carId);
+   const totalTimeFormatted = Number.isFinite(Number(o.totalTime)) ? fmtTime(o.totalTime) : '';
+   const avgFormatted = Number.isFinite(Number(o.averageLap)) ? Number(o.averageLap).toFixed(3) : '';
+   const bestFormatted = Number.isFinite(Number(o.bestLap)) ? Number(o.bestLap).toFixed(3) : '';
+   const deltaFormatted = Number.isFinite(Number(o.lapDelta)) ? Number(o.lapDelta).toFixed(3) : '';
+   const motorDeltaFormatted = Number.isFinite(Number(o.motorDelta)) ? Number(o.motorDelta).toFixed(1) : '';
+   rows.push([
+     r.runNo,r.date||'',r.time||'',
+     p.trackTemp??'',p.airTemp??'',p.humidity??'',
+     ss.category??c?.category??'',ss.podHeight??'',ss.diffType??'',ss.body??'',ss.motor??'',ss.battery??'',ss.rotofan??'',
+     p.motorBefore??'',o.motorAfter??'',motorDeltaFormatted,
+     ss.gearRatio??'',ss.frontTires??'',ss.rearTires??'',ss.trd??'',
+     ss.avd??'',ss.avgDia??'',ss.ard??'',ss.arg??'',
+     o.laps??'',totalTimeFormatted,avgFormatted,bestFormatted,deltaFormatted,
+     o.notes??p.notes??'',o.purpose??p.purpose??'',o.observations??'',o.conclusion??'',c?.name??''
+   ]);
+ });
+ const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');
+ const blob=new Blob([csv],{type:'text/csv'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download=`track-assistant-${new Date().toISOString().slice(0,10)}.csv`;
+ a.click();
+ URL.revokeObjectURL(a.href);
+};
 load();
 </script>
 </body>
