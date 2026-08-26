@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Track Assistant V2.4 Click-to-Record</title>
+<title>Track Assistant V2.5 Tap-to-Dictate</title>
 <style>
 :root{--bg:#0d1015;--card:#171c24;--card2:#11161d;--line:#2b3340;--text:#f4f7fb;--muted:#95a2b5;--accent:#7c5cff;--ok:#38d18b;--warn:#ffb84d;--danger:#ff6060}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -75,6 +75,7 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
     <h2 id="preTitle">PRE-RUN</h2>
     <div class="muted small">Tap any field you want to record. Purple = inherited from this car. Green = recorded for this run.</div>
     <div id="preFields" class="reminderChips" style="margin-top:12px"></div>
+    <div id="preQuickStatus" class="quickStatus">Tap any field to dictate its value immediately.</div>
     <button id="savePreBtn" class="success big" style="margin-top:14px">✓ PRE-RUN READY</button>
   </div>
 
@@ -82,17 +83,17 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
     <h2 id="postTitle">POST-RUN</h2>
     <div class="muted small">Tap the fields you want to log after the run. Average lap, lap delta and motor ΔT are calculated automatically.</div>
     <div id="postFields" class="reminderChips" style="margin-top:12px"></div>
+    <div id="postQuickStatus" class="quickStatus">Tap any field to dictate its value immediately.</div>
     <button id="savePostBtn" class="success big" style="margin-top:14px">✓ SAVE RUN RESULTS</button>
   </div>
 
   <div id="fieldRecorder" class="card hidden">
-    <div class="muted small" id="fieldGroup">Field</div>
+    <div class="muted small" id="fieldGroup">Correction</div>
     <div class="prompt" id="fieldPrompt">—</div>
     <div id="fieldCurrent" class="transcript">—</div>
-    <button id="fieldListenBtn" class="primary big" style="margin-top:12px">🎤 Speak value</button>
     <div class="grid2" style="margin-top:10px">
-      <input id="fieldManual" placeholder="Or type the value">
-      <button id="fieldSaveBtn" class="secondary">Save typed value</button>
+      <input id="fieldManual" placeholder="Type a corrected value">
+      <button id="fieldSaveBtn" class="secondary">Save correction</button>
     </div>
     <button id="fieldCancelBtn" class="danger big" style="margin-top:10px">Cancel</button>
   </div>
@@ -112,7 +113,7 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
     <div id="timeline" class="timeline" style="margin-top:12px"></div>
   </div>
 
-  <div class="footer">Track Assistant V2.4 · Click-to-record · Local prototype</div>
+  <div class="footer">Track Assistant V2.5 · Tap-to-dictate · Local prototype</div>
 </div>
 
 <style>
@@ -122,11 +123,16 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
 .fieldChip.recorded{border-color:#2c9f6d;background:#132c22;color:#8bf0bd}
 .fieldChip.auto{border-color:#8d6c2e;background:#2b2314;color:#ffd68b}
 .fieldChip .v{font-weight:900}
+
+.fieldChip.activeListen{animation:fieldPulse 1s infinite;border-color:#8f78ff;background:#292145;color:white}
+@keyframes fieldPulse{50%{box-shadow:0 0 0 9px rgba(124,92,255,0)}0%{box-shadow:0 0 0 0 rgba(124,92,255,.35)}}
+.quickStatus{margin-top:10px;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:#10151c;color:var(--muted);font-size:12px}
+
 </style>
 
 <script>
 const $=id=>document.getElementById(id);
-let session=null, recognition=null, activeField=null, activePhase='pre';
+let session=null, recognition=null, activeField=null, activePhase='pre', activeChip=null, speechInProgress=false;
 
 const setupKeys=['category','podHeight','diffType','body','motor','battery','rotofan','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg'];
 const preFields=[
@@ -187,7 +193,7 @@ function renderFieldChips(phase){
    const b=document.createElement('button'); b.className='fieldChip';
    if(value!=null&&value!=='')b.classList.add('recorded'); else if(inherited!=null)b.classList.add('inherited');
    b.innerHTML=(value!=null&&value!==''?'✓ ':inherited!=null?'✓ ':'')+esc(label)+(value!=null&&value!==''?` · <span class="v">${esc(formatVal(k,value))}</span>`:inherited!=null?` · <span class="v">${esc(inherited)}</span>`:'');
-   b.onclick=()=>openField(phase,k,label,type);
+   b.onclick=()=>startFieldDictation(phase,k,label,type,b);
    target.appendChild(b);
  });
  if(phase==='post'){
@@ -198,14 +204,30 @@ function renderFieldChips(phase){
    });
  }
 }
-function openField(phase,k,label,type){
- activePhase=phase; activeField={k,label,type};
+
+function startFieldDictation(phase,k,label,type,chip){
+ activePhase=phase; activeField={k,label,type}; activeChip=chip;
  const r=makeRun(), c=activeCar();
  let cur=phase==='pre'?r.pre[k]:r.post[k];
  if(cur==null&&phase==='pre'&&setupKeys.includes(k))cur=c.setup[k];
- $('fieldGroup').textContent=phase==='pre'?'PRE-RUN':'POST-RUN';
+ const statusId=phase==='pre'?'preQuickStatus':'postQuickStatus';
+ $(statusId).textContent=`Listening for ${label}…`;
+ if(chip)chip.classList.add('activeListen');
+ if(!recognition){
+   openCorrection(cur,label);
+   return;
+ }
+ try{
+   speechInProgress=true;
+   recognition.start();
+ }catch(e){
+   openCorrection(cur,label);
+ }
+}
+function openCorrection(cur,label,heard=''){
+ $('fieldGroup').textContent=activePhase==='pre'?'PRE-RUN correction':'POST-RUN correction';
  $('fieldPrompt').textContent=label;
- $('fieldCurrent').textContent=cur!=null?'Current / inherited: '+formatVal(k,cur):'No value recorded yet.';
+ $('fieldCurrent').textContent=heard?('Heard: '+heard):(cur!=null?'Current / inherited: '+formatVal(activeField.k,cur):'No value recorded yet.');
  $('fieldManual').value='';
  $('fieldRecorder').classList.remove('hidden');
  $('fieldRecorder').scrollIntoView({behavior:'smooth',block:'start'});
@@ -223,8 +245,10 @@ function saveField(raw){
    if(setupKeys.includes(k))c.setup[k]=v;
    r.effectiveSetup={...c.setup};
  }else r.post[k]=v;
- $('fieldRecorder').classList.add('hidden'); activeField=null; save();
- if(activePhase==='pre')$('preCard').scrollIntoView({behavior:'smooth',block:'start'}); else $('postCard').scrollIntoView({behavior:'smooth',block:'start'});
+ const statusId=activePhase==='pre'?'preQuickStatus':'postQuickStatus';
+ $(statusId).textContent=`Saved ${activeField.label}: ${formatVal(k,v)}`;
+ if(activeChip)activeChip.classList.remove('activeListen');
+ $('fieldRecorder').classList.add('hidden'); activeField=null; activeChip=null; save();
 }
 function render(){
  if(!session){
@@ -255,8 +279,40 @@ $('nextRunBtn').onclick=()=>{$('runSummary').classList.add('hidden');makeRun();w
 $('fieldSaveBtn').onclick=()=>saveField($('fieldManual').value);$('fieldManual').addEventListener('keydown',e=>{if(e.key==='Enter')saveField($('fieldManual').value)});
 $('fieldCancelBtn').onclick=()=>{$('fieldRecorder').classList.add('hidden');activeField=null};
 
-function initSpeech(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;recognition=new SR();recognition.lang='en-US';recognition.interimResults=false;recognition.continuous=false;recognition.onstart=()=>{$('fieldListenBtn').textContent='🎙 Listening…'};recognition.onend=()=>{$('fieldListenBtn').textContent='🎤 Speak value'};recognition.onerror=e=>{alert('Speech error: '+e.error)};recognition.onresult=e=>{const text=e.results[0][0].transcript;$('fieldCurrent').textContent='Heard: '+text;saveField(text)}}
-initSpeech();$('fieldListenBtn').onclick=()=>{if(!recognition)return alert('Speech recognition not available. Type the value instead.');try{recognition.start()}catch(e){}};
+function initSpeech(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
+ recognition=new SR();recognition.lang='en-US';recognition.interimResults=false;recognition.continuous=false;
+ recognition.onstart=()=>{speechInProgress=true};
+ recognition.onend=()=>{speechInProgress=false;if(activeChip)activeChip.classList.remove('activeListen')};
+ recognition.onerror=e=>{
+   speechInProgress=false;
+   if(activeChip)activeChip.classList.remove('activeListen');
+   const statusId=activePhase==='pre'?'preQuickStatus':'postQuickStatus';
+   $(statusId).textContent=`Speech error for ${activeField?.label||'field'}: ${e.error}. Type the value below.`;
+   let cur=null; const r=currentOpenRun(),c=activeCar();
+   if(activeField){cur=activePhase==='pre'?r?.pre?.[activeField.k]:r?.post?.[activeField.k];if(cur==null&&activePhase==='pre'&&setupKeys.includes(activeField.k))cur=c?.setup?.[activeField.k]}
+   openCorrection(cur,activeField?.label||'Field');
+ };
+ recognition.onresult=e=>{
+   const text=e.results[0][0].transcript;
+   const af=activeField;
+   if(!af)return;
+   let parsed=text;
+   if(af.type==='number')parsed=cleanNum(text);
+   if(af.type==='time')parsed=parseTime(text);
+   if(parsed==null||parsed===''){
+     const statusId=activePhase==='pre'?'preQuickStatus':'postQuickStatus';
+     $(statusId).textContent=`Could not understand ${af.label}. Type a correction below.`;
+     let cur=null; const r=currentOpenRun(),c=activeCar();
+     cur=activePhase==='pre'?r?.pre?.[af.k]:r?.post?.[af.k];
+     if(cur==null&&activePhase==='pre'&&setupKeys.includes(af.k))cur=c?.setup?.[af.k];
+     openCorrection(cur,af.label,text);
+     return;
+   }
+   saveField(text);
+ };
+}
+initSpeech();
 
 $('exportBtn').onclick=()=>{const header=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Chassis pod height','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','tours @ target time','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car'];const rows=[header];session.runs.filter(r=>r.completed).sort((a,b)=>a.runNo-b.runNo).forEach(r=>{const ss=r.effectiveSetup||{},p=r.pre||{},o=r.post||{},c=carById(r.carId);rows.push([r.runNo,r.date||'',r.time||'',p.trackTemp??'',p.airTemp??'',p.humidity??'',ss.category??c?.category??'',ss.podHeight??'',ss.diffType??'',ss.body??'',ss.motor??'',ss.battery??'',ss.rotofan??'',p.motorBefore??'',o.motorAfter??'',o.motorDelta??'',ss.gearRatio??'',ss.frontTires??'',ss.rearTires??'',ss.trd??'',ss.avd??'',ss.avgDia??'',ss.ard??'',ss.arg??'',o.laps??'',o.targetLaps??'',o.totalTime??'',o.averageLap??'',o.bestLap??'',o.lapDelta??'',o.notes??p.notes??'',o.purpose??p.purpose??'',o.observations??'',o.conclusion??'',c?.name??''])});const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)};
 load();
