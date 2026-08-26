@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Track Assistant V2.2 Free Speech Reminders</title>
+<title>Track Assistant V2.3 Progressive Voice Capture</title>
 <style>
 :root{--bg:#0d1015;--card:#171c24;--card2:#11161d;--line:#2b3340;--text:#f4f7fb;--muted:#95a2b5;--accent:#7c5cff;--ok:#38d18b;--warn:#ffb84d;--danger:#ff6060}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -33,6 +33,19 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
 .reminderChip.auto{background:rgba(255,184,77,.09);border-color:rgba(255,184,77,.38);color:#ffd290}
 .reminderChip .rv{opacity:.9;font-weight:800}
 .reminderLegend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:6px}
+
+.progressBox{margin-top:12px;border:1px solid #334052;background:#121820;border-radius:15px;padding:12px}
+.progressHead{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}
+.progressHead strong{font-size:14px}
+.progressHead span{font-size:11px;color:var(--muted)}
+.progressFields{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.progressField{background:#0f141b;border:1px solid #2e3947;border-radius:11px;padding:9px}
+.progressField label{margin:0 0 5px;font-size:11px}
+.progressField input,.progressField textarea{padding:8px;font-size:14px}
+.progressField textarea{min-height:55px}
+.captureCount{display:inline-block;background:#202938;border:1px solid #354152;border-radius:999px;padding:4px 8px;font-size:11px;color:#c7d0dc}
+@media(max-width:650px){.progressFields{grid-template-columns:1fr}}
+
 
 .footer{text-align:center;color:#707d90;font-size:11px;margin-top:20px}
 @media(max-width:650px){.grid2,.grid3,.extractGrid,.summaryGrid{grid-template-columns:1fr}.top{flex-direction:column}.hero{grid-template-columns:1fr}.speechButtons{grid-template-columns:1fr}.runNo{font-size:46px}}
@@ -107,13 +120,23 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
         <span>Grey = optional</span><span>✓ Purple = inherited</span><span>✓ Green = detected</span><span>AUTO = calculated</span>
       </div>
     </div>
-    <button id="listenBtn" class="primary big">🎤 Start listening</button>
-    <label>What I heard</label>
+    <button id="listenBtn" class="primary big">🎤 Add information</button>
+    <div class="small muted" style="margin-top:7px">You can tap the microphone as many times as you want. Each new voice entry is added to the same run.</div>
+    <label>Voice notes collected so far</label>
     <div id="transcriptBox" class="transcript">Nothing yet.</div>
-    <label>Or type / correct your free-speech note</label>
-    <textarea id="transcriptEdit" placeholder="Speak naturally or type here..."></textarea>
+    <label>Add or correct text manually</label>
+    <textarea id="transcriptEdit" placeholder="All voice entries accumulate here. You can edit this text too."></textarea>
+
+    <div class="progressBox">
+      <div class="progressHead">
+        <strong>Information captured so far</strong>
+        <span id="captureCounter" class="captureCount">0 fields</span>
+      </div>
+      <div id="liveFieldsGrid" class="progressFields"></div>
+    </div>
+
     <div class="grid2" style="margin-top:10px">
-      <button class="secondary" id="parseBtn">Organize this information</button>
+      <button class="success big" id="saveProgressBtn">✓ Save this run information</button>
       <button class="danger" id="cancelSpeechBtn">Cancel</button>
     </div>
   </div>
@@ -143,12 +166,12 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
     <div id="timeline" class="timeline" style="margin-top:12px"></div>
   </div>
 
-  <div class="footer">Track Assistant V2.2 · Free Speech Reminders · Session data stays in this browser</div>
+  <div class="footer">Track Assistant V2.3 · Progressive Voice Capture · Session data stays in this browser</div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
-let session=null, speechMode=null, pendingParsed=null, recognition=null;
+let session=null, speechMode=null, pendingParsed=null, recognition=null, speechAccumText='', speechAccumParsed={}, currentVoicePass='';
 
 const setupKeys=['category','podHeight','diffType','body','motor','battery','rotofan','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg'];
 const labels={
@@ -318,6 +341,68 @@ const preFields=['trackTemp','airTemp','humidity','category','podHeight','diffTy
 const postFields=['motorAfter','laps','targetLaps','totalTime','bestLap','purpose','observations','conclusion','notes'];
 
 function fieldType(k){return ['trackTemp','airTemp','humidity','podHeight','motorBefore','motorAfter','avd','avgDia','ard','arg','laps','targetLaps','totalTime','bestLap'].includes(k)?'number':'text'}
+
+function mergeParsed(base,add){
+ const out={...(base||{})};
+ Object.entries(add||{}).forEach(([k,v])=>{if(k!=='_raw' && k!=='_carId' && v!=null && v!=='')out[k]=v});
+ if(add?._carId)out._carId=add._carId;
+ out._raw=speechAccumText;
+ return out;
+}
+function renderLiveFields(){
+ const fields=speechMode==='pre'?preFields:postFields;
+ const setup=activeCar()?.setup||{};
+ const r=currentOpenRun();
+ $('liveFieldsGrid').innerHTML='';
+ let captured=0;
+ fields.forEach(k=>{
+   const wrap=document.createElement('div');wrap.className='progressField';
+   const lab=document.createElement('label');lab.textContent=labels[k]||k;wrap.appendChild(lab);
+   const multiline=['notes','purpose','observations','conclusion'].includes(k);
+   const inp=document.createElement(multiline?'textarea':'input');
+   if(!multiline) inp.type=fieldType(k);
+   inp.dataset.liveKey=k;
+   let val=speechAccumParsed[k];
+   if(val!=null&&val!==''){inp.value=val;captured++}
+   else if(speechMode==='pre'&&setupKeys.includes(k)&&setup[k]!=null){inp.placeholder='Inherited: '+setup[k]}
+   else if(speechMode==='pre'&&r?.pre?.[k]!=null){inp.placeholder='Already saved: '+r.pre[k]}
+   else if(speechMode==='post'&&r?.post?.[k]!=null){inp.placeholder='Already saved: '+r.post[k]}
+   else inp.placeholder='Not mentioned';
+   inp.addEventListener('input',()=>{
+     const key=inp.dataset.liveKey;
+     if(inp.value.trim()==='') delete speechAccumParsed[key];
+     else speechAccumParsed[key]=fieldType(key)==='number'?cleanNum(inp.value):inp.value.trim();
+     updateCaptureCounter();
+     updateReminders(speechMode,speechAccumText);
+   });
+   wrap.appendChild(inp);$('liveFieldsGrid').appendChild(wrap);
+ });
+ updateCaptureCounter();
+}
+function updateCaptureCounter(){
+ const count=(speechMode==='pre'?preFields:postFields).filter(k=>speechAccumParsed[k]!=null&&speechAccumParsed[k]!=='').length;
+ $('captureCounter').textContent=`${count} field${count===1?'':'s'}`;
+}
+function absorbText(text){
+ speechAccumText=String(text||'').trim();
+ speechAccumParsed=mergeParsed(speechAccumParsed,parseFree(speechAccumText,speechMode));
+ if(speechAccumParsed._carId && speechAccumParsed._carId!==session.activeCarId){
+   session.activeCarId=speechAccumParsed._carId;render();
+ }
+ $('transcriptBox').textContent=speechAccumText||'Nothing yet.';
+ $('transcriptEdit').value=speechAccumText;
+ updateReminders(speechMode,speechAccumText);
+ renderLiveFields();
+}
+function gatherLiveFields(){
+ const out={_raw:speechAccumText};
+ document.querySelectorAll('#liveFieldsGrid [data-live-key]').forEach(inp=>{
+   const v=inp.value.trim(); if(v!=='')out[inp.dataset.liveKey]=fieldType(inp.dataset.liveKey)==='number'?cleanNum(v):v;
+ });
+ if(speechAccumParsed._carId)out._carId=speechAccumParsed._carId;
+ return out;
+}
+
 function buildConfirm(parsed,mode){
  pendingParsed=parsed;
  if(parsed._carId&&parsed._carId!==session.activeCarId){session.activeCarId=parsed._carId;render()}
@@ -356,8 +441,10 @@ function startSpeech(mode){
  $('speechHint').textContent=mode==='pre'
  ?'Say conditions, setup or changes in any order. You can mention only what changed.'
  :'Say motor-after temperature, laps, total time, best lap, purpose, observations and conclusion in any order.';
+ speechAccumText=''; speechAccumParsed={}; currentVoicePass='';
  $('transcriptBox').textContent='Nothing yet.';$('transcriptEdit').value='';$('speechPanel').classList.remove('hidden');$('confirmPanel').classList.add('hidden');$('runSummary').classList.add('hidden');
- updateReminders(mode,'');
+ updateReminders(mode,''); renderLiveFields();
+ $('saveProgressBtn').textContent=mode==='pre'?'✓ Save PRE-RUN':'✓ Save POST-RUN';
  $('speechPanel').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function commitPre(vals){
@@ -439,8 +526,12 @@ $('carSelect').onchange=()=>{session.activeCarId=$('carSelect').value;save();win
 $('addCarBtn').onclick=()=>{$('addCarPanel').classList.remove('hidden');$('addCarPanel').scrollIntoView({behavior:'smooth',block:'start'})};
 $('createCarBtn').onclick=()=>{const name=$('newCarName').value.trim();if(!name)return alert('Enter a car name.');const id=uid(),cat=$('newCarClass').value.trim();session.cars.push({id,name,category:cat,setup:{category:cat}});session.activeCarId=id;$('newCarName').value='';$('newCarClass').value='';$('addCarPanel').classList.add('hidden');save()};
 $('preBtn').onclick=()=>startSpeech('pre');$('postBtn').onclick=()=>startSpeech('post');
-$('transcriptEdit').addEventListener('input',()=>updateReminders(speechMode,$('transcriptEdit').value));
-$('parseBtn').onclick=()=>{const text=$('transcriptEdit').value.trim()||$('transcriptBox').textContent.trim();if(!text||text==='Nothing yet.')return alert('Speak or type something first.');buildConfirm(parseFree(text,speechMode),speechMode)};
+$('transcriptEdit').addEventListener('input',()=>{absorbText($('transcriptEdit').value)});
+$('saveProgressBtn').onclick=()=>{
+ const vals=gatherLiveFields();
+ if(speechMode==='pre')commitPre(vals);else commitPost(vals);
+ $('speechPanel').classList.add('hidden');
+};
 $('cancelSpeechBtn').onclick=()=>{$('speechPanel').classList.add('hidden')};
 $('backToSpeechBtn').onclick=()=>{$('confirmPanel').classList.add('hidden');$('speechPanel').classList.remove('hidden')};
 $('saveExtractedBtn').onclick=()=>{const vals=gatherConfirm();speechMode==='pre'?commitPre(vals):commitPost(vals)};
@@ -450,10 +541,20 @@ function initSpeech(){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
  recognition=new SR();recognition.lang='en-US';recognition.interimResults=true;recognition.continuous=true;
  let final='';
- recognition.onstart=()=>{$('listenBtn').classList.add('listening');$('listenBtn').textContent='■ Stop listening';final=''};
- recognition.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const tx=e.results[i][0].transcript;if(e.results[i].isFinal)final+=tx+' ';else interim+=tx}const shown=(final+interim).trim();$('transcriptBox').textContent=shown||'Listening…';$('transcriptEdit').value=shown;updateReminders(speechMode,shown)};
+ recognition.onstart=()=>{$('listenBtn').classList.add('listening');$('listenBtn').textContent='■ Stop this voice entry';final='';currentVoicePass=''};
+ recognition.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const tx=e.results[i][0].transcript;if(e.results[i].isFinal)final+=tx+' ';else interim+=tx}currentVoicePass=(final+interim).trim();const combined=[speechAccumText,currentVoicePass].filter(Boolean).join(' ').trim();$('transcriptBox').textContent=combined||'Listening…';updateReminders(speechMode,combined);const preview=mergeParsed(speechAccumParsed,parseFree(combined,speechMode));const old=speechAccumParsed;speechAccumParsed=preview;renderLiveFields();speechAccumParsed=preview};
  recognition.onerror=e=>{$('transcriptBox').textContent='Speech error: '+e.error};
- recognition.onend=()=>{$('listenBtn').classList.remove('listening');$('listenBtn').textContent='🎤 Start listening'};
+ recognition.onend=()=>{
+ $('listenBtn').classList.remove('listening');$('listenBtn').textContent='🎤 Add more information';
+ if(currentVoicePass){
+   speechAccumText=[speechAccumText,currentVoicePass].filter(Boolean).join(' ').trim();
+   speechAccumParsed=mergeParsed(speechAccumParsed,parseFree(speechAccumText,speechMode));
+   $('transcriptBox').textContent=speechAccumText;
+   $('transcriptEdit').value=speechAccumText;
+   updateReminders(speechMode,speechAccumText);renderLiveFields();
+ }
+ currentVoicePass='';
+};
 }
 initSpeech();
 $('listenBtn').onclick=()=>{if(!recognition)return alert('Speech recognition is not available in this browser. You can type the note instead.');try{if($('listenBtn').classList.contains('listening'))recognition.stop();else{speechSynthesis?.cancel();recognition.start()}}catch(e){}};
