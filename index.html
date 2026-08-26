@@ -1,301 +1,469 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Track Assistant</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Track Assistant V2.2 Free Speech Reminders</title>
 <style>
-:root{--bg:#0f1115;--card:#181c23;--muted:#8f9bad;--text:#f5f7fb;--accent:#7c5cff;--ok:#3ecf8e;--warn:#ffb020;--danger:#ff5d5d;--line:#2a303a}
-*{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
-.app{max-width:920px;margin:0 auto;padding:18px}.top{display:flex;gap:12px;justify-content:space-between;align-items:center;margin-bottom:18px}.brand h1{margin:0;font-size:28px}.brand p{margin:4px 0 0;color:var(--muted)}
-.badge{background:#202632;border:1px solid var(--line);border-radius:999px;padding:8px 12px;color:#cbd4e2;font-size:13px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}.card h2{margin:0 0 12px;font-size:18px}.hero{padding:20px}.runnum{font-size:54px;font-weight:800;line-height:1}.muted{color:var(--muted)}
-button{border:0;border-radius:14px;padding:14px 16px;font-weight:700;font-size:16px;cursor:pointer}.primary{background:var(--accent);color:white}.secondary{background:#232a35;color:white;border:1px solid #343c49}.success{background:var(--ok);color:#06130d}.danger{background:var(--danger);color:white}.big{width:100%;padding:18px;font-size:18px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.actions3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-label{display:block;font-size:13px;color:#aab5c5;margin:10px 0 6px}input,textarea,select{width:100%;background:#11151b;color:white;border:1px solid #343b46;border-radius:12px;padding:12px;font-size:16px}textarea{min-height:88px;resize:vertical}.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.hidden{display:none}.prompt{font-size:22px;font-weight:750;line-height:1.3;margin:8px 0 14px}.heard{padding:12px;border-radius:12px;background:#11151b;border:1px solid var(--line);min-height:48px;color:#e8edf5}.status{margin-top:8px;color:var(--muted);font-size:13px}.timeline{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto}.runitem{border:1px solid var(--line);background:#12161c;border-radius:12px;padding:11px}.runitem strong{display:inline-block;min-width:64px}.kv{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 0;border-bottom:1px solid #252b34}.kv:last-child{border-bottom:0}.small{font-size:13px}.reminderPanel{margin:14px 0;padding:14px;background:#11151b;border:1px solid var(--line);border-radius:14px}.reminderTitle{font-weight:800;margin-bottom:4px}.reminderHint{font-size:13px;color:var(--muted);margin-bottom:12px}.reminderGroup{margin-top:11px}.reminderGroupTitle{font-size:12px;color:#aab5c5;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}.chips{display:flex;flex-wrap:wrap;gap:7px}.chip{font-size:13px;padding:7px 9px;border:1px solid #343b46;border-radius:999px;color:#c7cfdb;background:#171c24}.chip.inherited{border-color:#6757a8;color:#c8bfff}.chip.detected{border-color:#287b5a;color:#79e1b3;background:#10251d}.small{font-size:13px}.footer{margin-top:18px;color:#7f8a9c;font-size:12px;text-align:center}
-@media(max-width:700px){.grid,.actions,.actions3,.row,.row2{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.runnum{font-size:44px}}
+:root{--bg:#0d1015;--card:#171c24;--card2:#11161d;--line:#2b3340;--text:#f4f7fb;--muted:#95a2b5;--accent:#7c5cff;--ok:#38d18b;--warn:#ffb84d;--danger:#ff6060}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.app{max-width:900px;margin:auto;padding:16px 16px 44px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.brand h1{margin:0;font-size:27px}.brand p{margin:4px 0;color:var(--muted)}.badge{padding:8px 11px;border:1px solid var(--line);background:#1d2430;border-radius:999px;font-size:12px;color:#d5dce8}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px}.card h2{margin:0 0 12px;font-size:18px}.muted{color:var(--muted)}.small{font-size:12px}.hidden{display:none!important}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+button{border:0;border-radius:14px;padding:14px 16px;font-weight:800;font-size:16px;cursor:pointer}.primary{background:var(--accent);color:white}.secondary{background:#232a35;color:white;border:1px solid #354050}.success{background:var(--ok);color:#07150e}.danger{background:var(--danger);color:white}.big{width:100%;padding:20px;font-size:19px}
+label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textarea,select{width:100%;border:1px solid #364150;border-radius:12px;background:#10151c;color:white;padding:12px;font-size:16px}textarea{min-height:105px;resize:vertical}
+.hero{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.runNo{font-size:54px;line-height:.95;font-weight:900}.activeCar{font-size:23px;font-weight:850;margin-top:5px}.sessionMeta{margin-top:8px;color:var(--muted);font-size:13px}
+.speechButtons{display:grid;grid-template-columns:1fr 1fr;gap:12px}.speechButton{padding:24px 14px;font-size:20px}.pre{background:#6350e8;color:white}.post{background:#34c983;color:#06140d}
+.transcript{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:13px;min-height:70px;white-space:pre-wrap}.listening{box-shadow:0 0 0 8px rgba(124,92,255,.14);animation:pulse 1.2s infinite}@keyframes pulse{50%{box-shadow:0 0 0 14px rgba(124,92,255,0)}}
+.extractGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.field{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px}.field label{margin:0 0 5px}.field input,.field select,.field textarea{padding:9px;font-size:14px}.field textarea{min-height:64px}
+.sectionTitle{grid-column:1/-1;font-size:12px;color:#9da9ba;text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
+.timeline{display:flex;flex-direction:column;gap:8px}.runItem{background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:11px}.runHead{display:flex;justify-content:space-between;gap:8px}.runHead strong{font-size:15px}.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}.chip{font-size:12px;background:#202834;border:1px solid #303a49;padding:5px 8px;border-radius:999px}.good{color:var(--ok)}.warn{color:var(--warn)}
+.summaryGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.metric{background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:11px}.metric .n{font-size:24px;font-weight:900}.metric .l{font-size:11px;text-transform:uppercase;color:var(--muted)}
+
+.reminderPanel{margin:12px 0;background:#10151c;border:1px solid var(--line);border-radius:15px;padding:11px}
+.reminderHeader{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+.reminderHeader strong{font-size:14px}.reminderHeader span{font-size:11px;color:var(--muted)}
+.reminderGroup{border-top:1px solid #252e3a;padding-top:8px;margin-top:8px}
+.reminderGroup:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.reminderGroup summary{cursor:pointer;font-size:12px;font-weight:800;color:#bac5d4;text-transform:uppercase;letter-spacing:.06em;padding:4px 0}
+.reminderChips{display:flex;gap:6px;flex-wrap:wrap;padding:7px 0 2px}
+.reminderChip{border:1px solid #303a48;background:#1a212b;color:#9da9b9;border-radius:999px;padding:6px 9px;font-size:11px;line-height:1.15;transition:.15s}
+.reminderChip.detected{background:rgba(56,209,139,.13);border-color:rgba(56,209,139,.5);color:#8df0bd;font-weight:750}
+.reminderChip.inherited{background:rgba(124,92,255,.12);border-color:rgba(124,92,255,.45);color:#c7bbff}
+.reminderChip.auto{background:rgba(255,184,77,.09);border-color:rgba(255,184,77,.38);color:#ffd290}
+.reminderChip .rv{opacity:.9;font-weight:800}
+.reminderLegend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:6px}
+
+.footer{text-align:center;color:#707d90;font-size:11px;margin-top:20px}
+@media(max-width:650px){.grid2,.grid3,.extractGrid,.summaryGrid{grid-template-columns:1fr}.top{flex-direction:column}.hero{grid-template-columns:1fr}.speechButtons{grid-template-columns:1fr}.runNo{font-size:46px}}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><h1>Track Assistant</h1><p>Voice-first RC test logging</p></div>
-    <div class="badge" id="clockBadge">—</div>
+    <div class="brand"><h1>Track Assistant</h1><p>Speak freely. Test freely. The app organizes the data.</p></div>
+    <div class="badge" id="clock">—</div>
   </div>
 
-  <div class="grid">
-    <div class="card hero">
-      <div class="muted">Current run</div>
-      <div class="runnum" id="runNumber">1</div>
-      <div class="status" id="runStatus">No active session</div>
-      <div style="height:16px"></div>
-      <button class="primary big" id="newSessionBtn">Start New Session</button>
+  <div class="card hero">
+    <div>
+      <div class="muted small">NEXT SESSION RUN</div>
+      <div class="runNo" id="nextRunNo">1</div>
+      <div class="activeCar" id="activeCarLabel">No active session</div>
+      <div class="sessionMeta" id="sessionMeta">Create a testing session to begin.</div>
     </div>
+    <button class="secondary" id="newSessionBtn">NEW SESSION</button>
+  </div>
 
-    <div class="card">
-      <h2>Trackside controls</h2>
-      <div class="actions">
-        <button class="secondary" id="prepareBtn" disabled>🎤 Prepare Run</button>
-        <button class="secondary" id="postBtn" disabled>🎤 Log Result</button>
+  <div id="sessionPanel" class="card hidden">
+    <h2>New testing session</h2>
+    <div class="grid2">
+      <div><label>Track</label><input id="trackInput" placeholder="e.g. Swiss RC Protech"></div>
+      <div><label>Layout</label><input id="layoutInput" placeholder="Layout / track configuration"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Run duration for the day</label><select id="durationInput"><option value="5">5 minutes</option><option value="8">8 minutes</option></select></div>
+      <div><label>First car name</label><input id="firstCarInput" placeholder="e.g. GTLM"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Category / class</label><input id="firstClassInput" placeholder="e.g. 2500 GTLM"></div>
+      <div><label>Session notes</label><input id="sessionNotesInput" placeholder="Optional"></div>
+    </div>
+    <button class="primary big" id="createSessionBtn" style="margin-top:12px">Create Session</button>
+  </div>
+
+  <div id="carBar" class="card hidden">
+    <div class="grid2">
+      <div><label>ACTIVE CAR</label><select id="carSelect"></select></div>
+      <div style="display:flex;align-items:end"><button class="secondary big" id="addCarBtn">＋ Add Car</button></div>
+    </div>
+  </div>
+
+  <div id="addCarPanel" class="card hidden">
+    <h2>Add another car</h2>
+    <div class="grid2"><div><label>Car name</label><input id="newCarName" placeholder="Pan Car"></div><div><label>Category / class</label><input id="newCarClass" placeholder="2500 Pan"></div></div>
+    <button class="primary" id="createCarBtn" style="margin-top:12px">Add Car</button>
+  </div>
+
+  <div id="mainControls" class="card hidden">
+    <h2>Trackside logging</h2>
+    <div class="speechButtons">
+      <button id="preBtn" class="speechButton pre">🎤 PRE-RUN<br><span class="small">Speak setup, conditions & changes</span></button>
+      <button id="postBtn" class="speechButton post" disabled>🎤 POST-RUN<br><span class="small">Speak results & observations</span></button>
+    </div>
+    <div class="small muted" style="margin-top:10px">You do not need to speak in a fixed order. Mention only what matters. Existing car setup is inherited automatically.</div>
+  </div>
+
+  <div id="speechPanel" class="card hidden">
+    <h2 id="speechTitle">Pre-run free speech</h2>
+    <div class="muted" id="speechHint"></div>
+    <div id="reminderPanel" class="reminderPanel">
+      <div class="reminderHeader">
+        <strong>Things you may want to mention</strong>
+        <span>Prompts only — speak in any order</span>
       </div>
-      <div style="height:10px"></div>
-      <div class="actions">
-        <button class="secondary" id="quickBtn" disabled>🎙 Free Speech</button>
-        <button class="secondary" id="nextRunBtn" disabled>➕ Next Run</button>
+      <div id="reminderGroups"></div>
+      <div class="reminderLegend">
+        <span>Grey = optional</span><span>✓ Purple = inherited</span><span>✓ Green = detected</span><span>AUTO = calculated</span>
       </div>
-      <div style="height:10px"></div>
-      <button class="secondary big" id="exportBtn" disabled>Export Session CSV</button>
+    </div>
+    <button id="listenBtn" class="primary big">🎤 Start listening</button>
+    <label>What I heard</label>
+    <div id="transcriptBox" class="transcript">Nothing yet.</div>
+    <label>Or type / correct your free-speech note</label>
+    <textarea id="transcriptEdit" placeholder="Speak naturally or type here..."></textarea>
+    <div class="grid2" style="margin-top:10px">
+      <button class="secondary" id="parseBtn">Organize this information</button>
+      <button class="danger" id="cancelSpeechBtn">Cancel</button>
     </div>
   </div>
 
-  <div id="sessionSetup" class="card hidden" style="margin-top:14px">
-    <h2>New Session</h2>
-    <div class="row2">
-      <div><label>Car</label><input id="car" placeholder="e.g. DS28 Purple"></div>
-      <div><label>Track</label><input id="track" placeholder="e.g. Swiss RC Protech"></div>
-    </div>
-    <div class="row2">
-      <div><label>Layout</label><input id="layout" placeholder="Layout name / number"></div>
-      <div><label>Class</label><input id="raceClass" placeholder="2500 GTLM"></div>
-    </div>
-    <label>Session notes</label><textarea id="sessionNotes" placeholder="Optional"></textarea>
-    <div style="height:10px"></div>
-    <button class="primary" id="createSessionBtn">Create Session</button>
-  </div>
-
-  <div id="voicePanel" class="card hidden" style="margin-top:14px">
-    <div class="muted" id="voiceMode">Voice wizard</div>
-    <div class="prompt" id="promptText">—</div>
-    <div id="freeSpeechReminders" class="reminderPanel hidden">
-      <div class="reminderTitle">Things you may want to mention</div>
-      <div class="reminderHint">Speak naturally, in any order. These are reminders — nothing is required.</div>
-      <div id="reminderContent"></div>
-    </div>
-    <div class="heard" id="heardText">Tap Listen and speak.</div>
-    <div class="status" id="speechStatus">Speech recognition idle.</div>
-    <div style="height:12px"></div>
-    <div class="actions3">
-      <button class="primary" id="listenBtn">🎤 Listen</button>
-      <button class="secondary" id="skipBtn">Skip</button>
-      <button class="danger" id="cancelVoiceBtn">Cancel</button>
-    </div>
-    <div style="height:10px"></div>
-    <div class="row2">
-      <input id="manualAnswer" placeholder="Or type the answer here">
-      <button class="secondary" id="manualSubmitBtn">Use typed answer</button>
+  <div id="confirmPanel" class="card hidden">
+    <h2 id="confirmTitle">Confirm extracted information</h2>
+    <div class="muted small">Correct anything that was misunderstood. Blank setup fields remain unchanged.</div>
+    <div id="fieldsGrid" class="extractGrid" style="margin-top:10px"></div>
+    <div class="grid2" style="margin-top:12px">
+      <button class="success big" id="saveExtractedBtn">✓ Confirm & Save</button>
+      <button class="secondary big" id="backToSpeechBtn">← Edit speech</button>
     </div>
   </div>
 
-  <div class="grid" style="margin-top:14px">
-    <div class="card">
-      <h2>Current setup</h2>
-      <div id="setupView" class="muted">No setup yet.</div>
-    </div>
-    <div class="card">
-      <h2>Session runs</h2>
-      <div id="timeline" class="timeline"><div class="muted">No runs yet.</div></div>
-    </div>
+  <div id="runSummary" class="card hidden">
+    <h2 id="runSummaryTitle">Run saved</h2>
+    <div id="summaryMetrics" class="summaryGrid"></div>
+    <div id="summaryText" style="margin-top:10px"></div>
+    <button class="primary big" id="nextRunBtn" style="margin-top:12px">Prepare Next Run</button>
   </div>
 
-  <div class="footer">Prototype V2.1 · Free Speech reminders · Data is stored locally in this browser.</div>
+  <div id="historyCard" class="card hidden">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+      <h2 style="margin:0">Session history</h2>
+      <button class="secondary" id="exportBtn">Export CSV</button>
+    </div>
+    <div id="timeline" class="timeline" style="margin-top:12px"></div>
+  </div>
+
+  <div class="footer">Track Assistant V2.2 · Free Speech Reminders · Session data stays in this browser</div>
 </div>
+
 <script>
-const baselineFields = [
-  ['airTemp','Air temperature in degrees Celsius?','number'],
-  ['trackTemp','Track temperature in degrees Celsius?','number'],
-  ['humidity','Humidity percentage?','number'],
-  ['body','Body?','text'],
-  ['motor','Motor?','text'],
-  ['battery','Battery number or ID?','text'],
-  ['rotofan','RotoFan on or off?','text'],
-  ['gearRatio','Gear ratio? For example twelve fifty-three.','text'],
-  ['tires','Tyres?','text'],
-  ['trd','TRD or rear droop setting?','text'],
-  ['frontSetup','Front setup or spring?','text'],
-  ['rearSetup','Rear setup or spring?','text'],
-  ['diff','Differential setting?','text'],
-  ['esc','ESC and important ESC settings?','text']
-];
-const preRunFields = [
-  ['airTemp','Air temperature before this run?','number'],
-  ['trackTemp','Track temperature before this run?','number'],
-  ['humidity','Humidity before this run?','number'],
-  ['changes','Are you testing anything different from the previous run? Say no changes, or describe the change.','text']
-];
-const postRunFields = [
-  ['avgLap','Average lap time?','number'],
-  ['bestLap','Best lap time?','number'],
-  ['motorBefore','Motor temperature before the run?','number'],
-  ['motorAfter','Motor temperature after the run?','number'],
-  ['flTemp','Front left tyre temperature? Say skip if not measured.','number'],
-  ['frTemp','Front right tyre temperature?','number'],
-  ['rlTemp','Rear left tyre temperature?','number'],
-  ['rrTemp','Rear right tyre temperature?','number'],
-  ['purpose','Purpose of this run?','text'],
-  ['observations','What did you observe about the car?','text'],
-  ['conclusion','Conclusion or decision?','text'],
-  ['confidence','Confidence in this run: high, medium, or low?','text']
-];
+const $=id=>document.getElementById(id);
+let session=null, speechMode=null, pendingParsed=null, recognition=null;
 
+const setupKeys=['category','podHeight','diffType','body','motor','battery','rotofan','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg'];
+const labels={
+ trackTemp:'Track temperature °C',airTemp:'Air temperature °C',humidity:'Humidity %',category:'Category',podHeight:'Chassis pod height',diffType:'Diff type',body:'Carro / body',motor:'Motor',battery:'Lipo no.',rotofan:'RotoFan',motorBefore:'Motor temp before °C',motorAfter:'Motor temp after °C',gearRatio:'Gear ratio',frontTires:'Front tires',rearTires:'Rear tires',trd:'TRD no.',avd:'AVD tyre diameter mm',avgDia:'AVG tyre diameter mm',ard:'ARD tyre diameter mm',arg:'ARG tyre diameter mm',laps:'No. laps',targetLaps:'Tours @ target time',totalTime:'Total time (seconds)',averageLap:'Average lap',bestLap:'Best lap',lapDelta:'Best→Avg delta',notes:'Notes',purpose:'Purpose',observations:'Observations',conclusion:'Possible conclusion'
+};
 
-const reminderGroups = [
-  ['Conditions', [['trackTemp','Track temp'],['airTemp','Air temp'],['humidity','Humidity'],['category','Category']]],
-  ['Car / setup', [['podHeight','Pod height'],['diff','Diff'],['body','Body'],['motor','Motor'],['battery','LiPo no.'],['rotofan','RotoFan'],['gearRatio','Gear ratio'],['frontTires','Front tires'],['rearTires','Rear tires'],['trd','TRD'],['tireDiameters','Tire diameters']]],
-  ['Test', [['purpose','Objective / purpose'],['changes','What changed'],['observations','Driver feeling / observation']]],
-  ['After run', [['motorBefore','Motor temp before'],['motorAfter','Motor temp after'],['laps','No. laps'],['targetLaps','Laps @ target'],['totalTime','Total time'],['avgLap','Average'],['bestLap','Best lap'],['conclusion','Conclusion / notes']]]
-];
-function reminderValue(key){
-  const r=currentRun()||{}, setup=r.effectiveSetup||session?.baselineSetup||{}, env=r.environment||{}, res=r.results||{}, notes=r.notes||{};
-  const maps={category:session?.raceClass, trackTemp:env.trackTemp,airTemp:env.airTemp,humidity:env.humidity,purpose:notes.purpose,observations:notes.observations,conclusion:notes.conclusion,changes:r.changes};
-  return maps[key] ?? setup[key] ?? res[key];
+function uid(){return (crypto.randomUUID&&crypto.randomUUID())||('id-'+Date.now()+'-'+Math.random())}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function nowISO(){return new Date().toISOString()}
+function tick(){$('clock').textContent=new Date().toLocaleString([], {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'})} setInterval(tick,1000);tick();
+function activeCar(){return session?.cars?.find(c=>c.id===session.activeCarId)||null}
+function currentOpenRun(){return session?.runs?.find(r=>!r.completed&&r.carId===session.activeCarId)||null}
+function carById(id){return session?.cars?.find(c=>c.id===id)}
+function save(){if(session)localStorage.setItem('trackAssistantV21',JSON.stringify(session));render()}
+function load(){try{session=JSON.parse(localStorage.getItem('trackAssistantV21'))}catch(e){}render()}
+
+function newRunForCar(){
+  if(!session||!activeCar())return null;
+  let r=currentOpenRun();
+  if(r)return r;
+  r={id:uid(),runNo:session.nextRunNo++,carId:activeCar().id,createdAt:nowISO(),pre:{},post:{},effectiveSetup:{...activeCar().setup},completed:false};
+  session.runs.push(r); save(); return r;
 }
-function renderReminders(){
-  const html=reminderGroups.map(([title,items])=>`<div class="reminderGroup"><div class="reminderGroupTitle">${title}</div><div class="chips">${items.map(([key,label])=>{const v=reminderValue(key);return `<span class="chip ${v!==undefined&&v!==null&&v!==''?'inherited':''}" data-reminder="${key}">${v!==undefined&&v!==null&&v!==''?'✓ ':''}${label}${v!==undefined&&v!==null&&v!==''?' · '+escapeHtml(String(v)):''}</span>`}).join('')}</div></div>`).join('');
-  $('reminderContent').innerHTML=html;
+function cleanNum(v){if(v==null||v==='')return null;const n=Number(String(v).replace(',','.'));return Number.isFinite(n)?n:null}
+function parseTotalSeconds(text){
+ const t=String(text).toLowerCase().replace(/,/g,'.');
+ let m=t.match(/(\d+)\s*:\s*(\d+(?:\.\d+)?)/); if(m)return Number(m[1])*60+Number(m[2]);
+ m=t.match(/(\d+(?:\.\d+)?)\s*(?:minutes?|mins?|min)\D{0,15}(\d+(?:\.\d+)?)?\s*(?:seconds?|secs?|sec|s)?/);
+ if(m)return Number(m[1])*60+Number(m[2]||0);
+ m=t.match(/total\s+(?:time\s+)?(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|sec|s)/); if(m)return Number(m[1]);
+ return null;
 }
-function markMentioned(text){
-  const t=String(text).toLowerCase();
-  const terms={trackTemp:['track temp','track temperature'],airTemp:['air temp','air temperature','ambient'],humidity:['humidity'],category:['category','class'],podHeight:['pod height','chassis pod'],diff:['diff','differential'],body:['body','carro'],motor:['motor'],battery:['lipo','battery'],rotofan:['rotofan','roto fan'],gearRatio:['gear ratio','gearing'],frontTires:['front tire','front tyre'],rearTires:['rear tire','rear tyre'],trd:['trd'],tireDiameters:['diameter','avd','avg','ard','arg'],purpose:['objective','purpose','testing'],changes:['change','changed'],observations:['feel','feels','observation','handling'],motorBefore:['motor temp before','temperature before'],motorAfter:['motor temp after','temperature after'],laps:['laps','tours'],targetLaps:['target'],totalTime:['total time'],avgLap:['average','avg lap','moyenne'],bestLap:['best lap','meilleur'],conclusion:['conclusion','notes']};
-  Object.entries(terms).forEach(([k,words])=>{if(words.some(w=>t.includes(w))){const el=document.querySelector(`[data-reminder="${k}"]`);if(el)el.classList.add('detected')}});
+function firstNumberAfter(t,patterns){
+ for(const p of patterns){const m=t.match(p);if(m)return cleanNum(m[1])} return null
+}
+function captureTextAfter(t, regex, stops){
+ const m=t.match(regex);if(!m)return null;
+ let x=m[1].trim();
+ if(stops){const stop=new RegExp('\\b(?:'+stops.join('|')+')\\b','i');x=x.split(stop)[0].trim()}
+ return x.replace(/[.,;]+$/,'').trim()||null;
+}
+function yesNoFrom(t,key){
+ const rx=new RegExp('\\b'+key+'\\b[^.;,]*','i'),m=t.match(rx);if(!m)return null;const x=m[0].toLowerCase();
+ if(/\b(on|yes|with|fitted|installed)\b/.test(x))return 'Yes';
+ if(/\b(off|no|without|removed)\b/.test(x))return 'No';
+ return null;
+}
+function parseDiameters(t,out){
+ const specs=[
+  ['avd',/\b(?:avd|front right|front-right)\b[^0-9-]*(-?\d+(?:[.,]\d+)?)/i],
+  ['avgDia',/\b(?:avg diameter|avg tyre|avg tire|avg\b|front left|front-left)\b[^0-9-]*(-?\d+(?:[.,]\d+)?)/i],
+  ['ard',/\b(?:ard|rear right|rear-right)\b[^0-9-]*(-?\d+(?:[.,]\d+)?)/i],
+  ['arg',/\b(?:arg|rear left|rear-left)\b[^0-9-]*(-?\d+(?:[.,]\d+)?)/i]
+ ];
+ specs.forEach(([k,r])=>{const m=t.match(r);if(m)out[k]=cleanNum(m[1])});
+}
+function parseFree(text,mode){
+ const raw=String(text||'').trim(), t=raw.toLowerCase().replace(/,/g,'.');
+ const out={_raw:raw};
+ // Allow naming/switching car in speech.
+ if(session?.cars){for(const c of session.cars){if(t.includes(c.name.toLowerCase()))out._carId=c.id}}
+ if(mode==='pre'){
+   let v;
+   v=firstNumberAfter(t,[/\btrack(?: temperature| temp)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/]); if(v!=null)out.trackTemp=v;
+   v=firstNumberAfter(t,[/\bair(?: temperature| temp)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/]); if(v!=null)out.airTemp=v;
+   v=firstNumberAfter(t,[/\bhumidity\b[^0-9-]*(-?\d+(?:\.\d+)?)/]); if(v!=null)out.humidity=v;
+   v=firstNumberAfter(t,[/\bmotor(?: temperature| temp)?\s*(?:before|pre[- ]?run|starting)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/,/\bbefore(?: run)?\b[^0-9-]*(-?\d+(?:\.\d+)?)\s*(?:degrees?|°)?/]); if(v!=null)out.motorBefore=v;
+   v=firstNumberAfter(t,[/\bpod(?: height)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/]); if(v!=null)out.podHeight=v;
+   v=firstNumberAfter(t,[/\b(?:lipo|battery)(?: number| no| id)?\b[^0-9-]*([0-9]+(?:\.[0-9]+)?)/]); if(v!=null)out.battery=String(v);
+   v=firstNumberAfter(t,[/\btrd(?: number| no)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/]); if(v!=null)out.trd=String(v);
+   let m=t.match(/\b(?:gear|gear ratio|ratio)\b[^0-9]*([0-9]{1,2})\s*(?:\/|to|[- ])\s*([0-9]{2})\b/);if(m)out.gearRatio=m[1]+'/'+m[2];
+   let yn=yesNoFrom(t,'rotofan'); if(yn)out.rotofan=yn;
+   parseDiameters(t,out);
+   const stops=['air','track','humidity','motor','battery','lipo','rotofan','gear','ratio','front','rear','trd','pod','diff','body','carro','purpose','notes'];
+   let x=captureTextAfter(raw,/\b(?:front tires?|front tyres?)\s*(?:are|is|:)?\s*([^.;]+)/i,stops);if(x)out.frontTires=x;
+   x=captureTextAfter(raw,/\b(?:rear tires?|rear tyres?)\s*(?:are|is|:)?\s*([^.;]+)/i,stops);if(x)out.rearTires=x;
+   x=captureTextAfter(raw,/\b(?:diff|differential)(?: type)?\s*(?:is|:)?\s*([^.;]+)/i,['air','track','humidity','motor','battery','lipo','gear','front','rear','trd','pod','body','carro']);if(x)out.diffType=x;
+   x=captureTextAfter(raw,/\b(?:body|carro)\s*(?:is|:)?\s*([^.;]+)/i,['air','track','humidity','motor','battery','lipo','gear','front','rear','trd','pod','diff']);if(x)out.body=x;
+   // Motor model only when not followed by temp/before/after.
+   const mm=raw.match(/\bmotor\s+(?!temp(?:erature)?\b|before\b|after\b)([^.;]+)/i);
+   if(mm){let y=mm[1].split(/\b(?:air|track|humidity|battery|lipo|rotofan|gear|front|rear|trd|pod|diff|body|carro)\b/i)[0].trim();if(y&&!/^\d+(?:\.\d+)?\s*(?:degrees?|°)/i.test(y))out.motor=y}
+   x=captureTextAfter(raw,/\b(?:category|class)\s*(?:is|:)?\s*([^.;]+)/i,['air','track','humidity','motor','battery','lipo','gear','front','rear']);if(x)out.category=x;
+   x=captureTextAfter(raw,/\bpurpose\s*(?:is|was|:)?\s*([^.;]+)/i);if(x)out.purpose=x;
+   x=captureTextAfter(raw,/\bnotes?\s*(?:are|is|:)?\s*([^.;]+)/i);if(x)out.notes=x;
+ }
+ if(mode==='post'){
+   let v;
+   v=firstNumberAfter(t,[/\bmotor(?: temperature| temp)?\s*(?:after|post[- ]?run|finished|finish)?\b[^0-9-]*(-?\d+(?:\.\d+)?)/]);if(v!=null)out.motorAfter=v;
+   v=firstNumberAfter(t,[/\b([0-9]+)\s*laps?\b/,/\blaps?\b[^0-9]*([0-9]+)/]);if(v!=null)out.laps=v;
+   v=firstNumberAfter(t,[/\b(?:tours?|laps?)\s*(?:at|@)\s*(?:target(?: time)?|target)\b[^0-9]*([0-9]+)/,/\btarget(?: laps?| time)?\b[^0-9]*([0-9]+)/]);if(v!=null)out.targetLaps=v;
+   v=firstNumberAfter(t,[/\bbest(?: lap| tour)?\b[^0-9]*([0-9]+(?:\.\d+)?)/,/\bmeilleur(?: tour)?\b[^0-9]*([0-9]+(?:\.\d+)?)/]);if(v!=null)out.bestLap=v;
+   const sec=parseTotalSeconds(raw); if(sec!=null)out.totalTime=sec;
+   let x=captureTextAfter(raw,/\bpurpose\s*(?:is|was|:)?\s*([^.;]+)/i,['observation','observations','conclusion','notes']);if(x)out.purpose=x;
+   x=captureTextAfter(raw,/\bobservations?\s*(?:are|were|was|:)?\s*([^.;]+)/i,['conclusion','notes','purpose']);if(x)out.observations=x;
+   x=captureTextAfter(raw,/\b(?:possible\s+)?conclusion\s*(?:is|was|:)?\s*([^.;]+)/i,['notes','purpose','observation']);if(x)out.conclusion=x;
+   x=captureTextAfter(raw,/\bnotes?\s*(?:are|were|was|:)?\s*([^.;]+)/i,['purpose','observation','conclusion']);if(x)out.notes=x;
+   // Natural phrases without labels.
+   if(!out.conclusion){
+     const km=raw.match(/\b(?:keep it|keep this|reject it|retest|test again|better overall|worse overall)\b[^.;]*/i);
+     if(km)out.conclusion=km[0].trim();
+   }
+ }
+ return out;
 }
 
-let session = null;
-let voiceQueue = [];
-let voiceIndex = 0;
-let voiceTarget = null;
-let recognition = null;
 
-const $ = id => document.getElementById(id);
-function nowISO(){ return new Date().toISOString(); }
-function localStamp(d=new Date()){ return d.toLocaleString([], {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
-function tick(){ $('clockBadge').textContent = localStamp(); }
-setInterval(tick,1000); tick();
+const reminderGroupsPre=[
+ {name:'Conditions',fields:['trackTemp','airTemp','humidity']},
+ {name:'Pre-run measurement',fields:['motorBefore']},
+ {name:'Car / Setup',fields:['category','podHeight','diffType','body','motor','battery','rotofan','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg']},
+ {name:'Test',fields:['purpose','notes']}
+];
+const reminderGroupsPost=[
+ {name:'After Run',fields:['motorAfter','laps','targetLaps','totalTime','bestLap']},
+ {name:'Test',fields:['purpose','observations','conclusion','notes']},
+ {name:'Calculated automatically',fields:['averageLap','lapDelta','motorDelta'],auto:true}
+];
+const shortLabels={
+ trackTemp:'Track temp',airTemp:'Air temp',humidity:'Humidity',motorBefore:'Motor temp before',
+ category:'Category',podHeight:'Pod height',diffType:'Diff',body:'Body',motor:'Motor',battery:'LiPo',
+ rotofan:'RotoFan',gearRatio:'Gear ratio',frontTires:'Front tires',rearTires:'Rear tires',trd:'TRD',
+ avd:'AVD Ø',avgDia:'AVG Ø',ard:'ARD Ø',arg:'ARG Ø',purpose:'Purpose',notes:'Notes',
+ motorAfter:'Motor temp after',laps:'No. laps',targetLaps:'Laps @ target',totalTime:'Total time',
+ bestLap:'Best lap',observations:'Observations',conclusion:'Conclusion',averageLap:'Average lap',
+ lapDelta:'Lap delta',motorDelta:'Motor ΔT'
+};
+function displayReminderValue(k,v){
+ if(v==null||v==='')return '';
+ if(['trackTemp','airTemp','motorBefore','motorAfter'].includes(k))return `${v}°`;
+ if(k==='humidity')return `${v}%`;
+ if(['avd','avgDia','ard','arg','podHeight'].includes(k))return `${v} mm`;
+ if(k==='totalTime')return fmtTime(v);
+ return String(v);
+}
+function updateReminders(mode,text=''){
+ if(!$('reminderGroups'))return;
+ const groups=mode==='pre'?reminderGroupsPre:reminderGroupsPost;
+ const parsed=text?parseFree(text,mode):{};
+ const c=activeCar(), setup=c?.setup||{};
+ const r=currentOpenRun();
+ $('reminderGroups').innerHTML='';
+ groups.forEach((g,gi)=>{
+   const details=document.createElement('details');details.className='reminderGroup';details.open=true;
+   const summary=document.createElement('summary');summary.textContent=g.name;details.appendChild(summary);
+   const chips=document.createElement('div');chips.className='reminderChips';
+   g.fields.forEach(k=>{
+     const chip=document.createElement('span');chip.className='reminderChip';chip.dataset.reminderKey=k;
+     let state='', value=null;
+     if(g.auto){state='auto';}
+     else if(parsed[k]!=null){state='detected';value=parsed[k];}
+     else if(mode==='pre' && setupKeys.includes(k) && setup[k]!=null){state='inherited';value=setup[k];}
+     else if(mode==='pre' && r?.pre?.[k]!=null){state='detected';value=r.pre[k];}
+     else if(mode==='post' && r?.post?.[k]!=null){state='detected';value=r.post[k];}
+     if(state)chip.classList.add(state);
+     let prefix=state==='detected'?'✓ ':state==='inherited'?'✓ ':state==='auto'?'AUTO · ':'';
+     let txt=prefix+(shortLabels[k]||labels[k]||k);
+     const dv=displayReminderValue(k,value);
+     if(dv)txt+=` <span class="rv">· ${esc(dv)}</span>`;
+     chip.innerHTML=txt;
+     chips.appendChild(chip);
+   });
+   details.appendChild(chips);$('reminderGroups').appendChild(details);
+ });
+}
 
-function save(){ if(session) localStorage.setItem('trackAssistantSession', JSON.stringify(session)); render(); }
-function load(){ try{session=JSON.parse(localStorage.getItem('trackAssistantSession'));}catch(e){} if(session) render(); }
-function currentRun(){ return session?.runs?.[session.runs.length-1] || null; }
+const preFields=['trackTemp','airTemp','humidity','category','podHeight','diffType','body','motor','battery','rotofan','motorBefore','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg','purpose','notes'];
+const postFields=['motorAfter','laps','targetLaps','totalTime','bestLap','purpose','observations','conclusion','notes'];
+
+function fieldType(k){return ['trackTemp','airTemp','humidity','podHeight','motorBefore','motorAfter','avd','avgDia','ard','arg','laps','targetLaps','totalTime','bestLap'].includes(k)?'number':'text'}
+function buildConfirm(parsed,mode){
+ pendingParsed=parsed;
+ if(parsed._carId&&parsed._carId!==session.activeCarId){session.activeCarId=parsed._carId;render()}
+ const fields=mode==='pre'?preFields:postFields;
+ $('confirmTitle').textContent=(mode==='pre'?'Pre-run':'Post-run')+' · Confirm extracted information';
+ $('fieldsGrid').innerHTML='';
+ const setup=activeCar()?.setup||{};
+ fields.forEach(k=>{
+   let val=parsed[k];
+   const current=setup[k];
+   const inherited=(mode==='pre'&&setupKeys.includes(k)&&val==null&&current!=null);
+   const wrap=document.createElement('div');wrap.className='field';
+   const lab=document.createElement('label');lab.textContent=labels[k]||k;wrap.appendChild(lab);
+   const inp=document.createElement(k==='notes'||k==='purpose'||k==='observations'||k==='conclusion'?'textarea':'input');
+   if(inp.tagName==='INPUT') inp.type=fieldType(k);
+   inp.dataset.key=k;
+   if(val!=null)inp.value=val;
+   else if(inherited){inp.placeholder='Inherited: '+current;inp.dataset.inherited='1'}
+   else inp.placeholder='Not mentioned';
+   wrap.appendChild(inp);
+   $('fieldsGrid').appendChild(wrap);
+ });
+ $('speechPanel').classList.add('hidden');$('confirmPanel').classList.remove('hidden');$('confirmPanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function gatherConfirm(){
+ const out={_raw:pendingParsed?._raw||''};
+ document.querySelectorAll('#fieldsGrid [data-key]').forEach(inp=>{if(inp.value.trim()!=='')out[inp.dataset.key]=fieldType(inp.dataset.key)==='number'?cleanNum(inp.value):inp.value.trim()});
+ return out;
+}
+
+function startSpeech(mode){
+ if(!session)return;
+ speechMode=mode;
+ if(mode==='pre')newRunForCar();
+ $('speechTitle').textContent=mode==='pre'?`Run ${currentOpenRun().runNo} · PRE-RUN free speech`:`Run ${currentOpenRun()?.runNo||'—'} · POST-RUN free speech`;
+ $('speechHint').textContent=mode==='pre'
+ ?'Say conditions, setup or changes in any order. You can mention only what changed.'
+ :'Say motor-after temperature, laps, total time, best lap, purpose, observations and conclusion in any order.';
+ $('transcriptBox').textContent='Nothing yet.';$('transcriptEdit').value='';$('speechPanel').classList.remove('hidden');$('confirmPanel').classList.add('hidden');$('runSummary').classList.add('hidden');
+ updateReminders(mode,'');
+ $('speechPanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function commitPre(vals){
+ let r=currentOpenRun();if(!r)r=newRunForCar();
+ const c=activeCar();
+ r.pre={...r.pre,...vals};
+ setupKeys.forEach(k=>{if(vals[k]!=null&&vals[k]!=='')c.setup[k]=vals[k]});
+ r.effectiveSetup={...c.setup};
+ r.preRaw=vals._raw||'';
+ r.preparedAt=nowISO();r.date=new Date().toLocaleDateString();r.time=new Date().toLocaleTimeString();
+ if(vals.purpose)r.pre.purpose=vals.purpose;if(vals.notes)r.pre.notes=vals.notes;
+ save();$('confirmPanel').classList.add('hidden');$('postBtn').disabled=false;
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function commitPost(vals){
+ const r=currentOpenRun();if(!r){alert('Prepare a run first.');return}
+ r.post={...r.post,...vals};r.postRaw=vals._raw||'';r.finishedAt=nowISO();
+ const laps=cleanNum(r.post.laps),total=cleanNum(r.post.totalTime),best=cleanNum(r.post.bestLap),mb=cleanNum(r.pre.motorBefore),ma=cleanNum(r.post.motorAfter);
+ if(laps&&total)r.post.averageLap=total/laps;
+ if(r.post.averageLap!=null&&best!=null)r.post.lapDelta=r.post.averageLap-best;
+ if(mb!=null&&ma!=null)r.post.motorDelta=ma-mb;
+ r.completed=true;
+ save();$('confirmPanel').classList.add('hidden');showRunSummary(r);
+}
+function fmtLap(v){return Number.isFinite(Number(v))?Number(v).toFixed(3):'—'}
+function fmtTime(s){if(!Number.isFinite(Number(s)))return'—';s=Number(s);const m=Math.floor(s/60),sec=s-m*60;return `${m}:${sec.toFixed(2).padStart(5,'0')}`}
+function showRunSummary(r){
+ const c=carById(r.carId),carRuns=session.runs.filter(x=>x.completed&&x.carId===r.carId);
+ const avgs=carRuns.map(x=>Number(x.post.averageLap)).filter(Number.isFinite),bests=carRuns.map(x=>Number(x.post.bestLap)).filter(Number.isFinite);
+ const bestAvg=avgs.length?Math.min(...avgs):null,bestLap=bests.length?Math.min(...bests):null;
+ $('runSummaryTitle').textContent=`Run ${r.runNo} saved · ${c?.name||''}`;
+ const ms=[
+  ['Laps',r.post.laps??'—'],
+  ['Average',fmtLap(r.post.averageLap)],
+  ['Best lap',fmtLap(r.post.bestLap)],
+  ['Motor ΔT',Number.isFinite(Number(r.post.motorDelta))?Number(r.post.motorDelta).toFixed(1)+'°C':'—']
+ ];
+ $('summaryMetrics').innerHTML=ms.map(([l,n])=>`<div class="metric"><div class="l">${esc(l)}</div><div class="n">${esc(n)}</div></div>`).join('');
+ let text=[];
+ if(bestAvg!=null&&Number.isFinite(Number(r.post.averageLap)))text.push(Number(r.post.averageLap)<=bestAvg+0.0005?'★ Best average for this car':`${(Number(r.post.averageLap)-bestAvg).toFixed(3)} s off this car's best average`);
+ if(bestLap!=null&&Number.isFinite(Number(r.post.bestLap)))text.push(Number(r.post.bestLap)<=bestLap+0.0005?'★ Best lap for this car':`${(Number(r.post.bestLap)-bestLap).toFixed(3)} s off this car's best lap`);
+ if(r.post.purpose||r.pre.purpose)text.push(`<b>Purpose:</b> ${esc(r.post.purpose||r.pre.purpose)}`);
+ if(r.post.observations)text.push(`<b>Observation:</b> ${esc(r.post.observations)}`);
+ if(r.post.conclusion)text.push(`<b>Conclusion:</b> ${esc(r.post.conclusion)}`);
+ $('summaryText').innerHTML=text.map(x=>`<div style="margin:6px 0">${x}</div>`).join('');
+ $('runSummary').classList.remove('hidden');$('runSummary').scrollIntoView({behavior:'smooth',block:'start'});
+}
 
 function render(){
-  if(!session){ $('runNumber').textContent='1'; $('runStatus').textContent='No active session'; return; }
-  const r=currentRun();
-  $('runNumber').textContent=r?.runNumber || 1;
-  $('runStatus').textContent=`${session.car || 'Car'} · ${session.track || 'Track'} · ${session.raceClass || ''}`;
-  ['prepareBtn','postBtn','quickBtn','nextRunBtn','exportBtn'].forEach(x=>$(x).disabled=false);
-  $('newSessionBtn').textContent='Start Another Session';
-  const setup=r?.effectiveSetup || session.baselineSetup || {};
-  const keys=Object.keys(setup);
-  $('setupView').innerHTML = keys.length ? keys.map(k=>`<div class="kv"><span>${pretty(k)}</span><strong>${escapeHtml(String(setup[k]??''))}</strong></div>`).join('') : '<div class="muted">No setup yet.</div>';
-  if(!session.runs.length){ $('timeline').innerHTML='<div class="muted">No runs yet.</div>'; }
-  else $('timeline').innerHTML=[...session.runs].reverse().map(r=>{
-    let line=[];
-    if(r.results?.avgLap) line.push(`Avg ${r.results.avgLap}`);
-    if(r.results?.bestLap) line.push(`Best ${r.results.bestLap}`);
-    if(r.results?.delta!=null) line.push(`Δ ${Number(r.results.delta).toFixed(3)}`);
-    return `<div class="runitem"><strong>Run ${r.runNumber}</strong> <span class="small muted">${escapeHtml(r.preparedAt ? new Date(r.preparedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '')}</span><div class="small">${escapeHtml(line.join(' · ') || 'Not completed')}</div>${r.changes ? `<div class="small muted">Change: ${escapeHtml(r.changes)}</div>`:''}</div>`;
-  }).join('');
+ if(!session){$('nextRunNo').textContent='1';$('activeCarLabel').textContent='No active session';$('sessionMeta').textContent='Create a testing session to begin.';['carBar','mainControls','historyCard'].forEach(id=>$(id).classList.add('hidden'));return}
+ const c=activeCar();
+ $('nextRunNo').textContent=currentOpenRun()?.runNo||session.nextRunNo;
+ $('activeCarLabel').textContent=c?.name||'No car';
+ $('sessionMeta').textContent=`${session.track||'Track'}${session.layout?' · '+session.layout:''} · ${session.duration} min runs · ${session.runs.filter(r=>r.completed).length} completed`;
+ $('carBar').classList.remove('hidden');$('mainControls').classList.remove('hidden');$('historyCard').classList.remove('hidden');
+ $('carSelect').innerHTML=session.cars.map(x=>`<option value="${esc(x.id)}"${x.id===session.activeCarId?' selected':''}>${esc(x.name)}${x.category?' · '+esc(x.category):''}</option>`).join('');
+ $('postBtn').disabled=!currentOpenRun()?.preparedAt;
+ const runs=[...session.runs].filter(r=>r.completed).sort((a,b)=>b.runNo-a.runNo);
+ $('timeline').innerHTML=runs.length?runs.map(r=>{
+  const c=carById(r.carId),bits=[];
+  if(r.post.laps!=null)bits.push(`${r.post.laps} laps`);
+  if(r.post.averageLap!=null)bits.push(`Avg ${fmtLap(r.post.averageLap)}`);
+  if(r.post.bestLap!=null)bits.push(`Best ${fmtLap(r.post.bestLap)}`);
+  if(r.post.lapDelta!=null)bits.push(`Δ ${fmtLap(r.post.lapDelta)}`);
+  return `<div class="runItem"><div class="runHead"><strong>Run ${r.runNo} · ${esc(c?.name||'')}</strong><span class="small muted">${esc(r.time||'')}</span></div><div class="chips">${bits.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>${r.post.purpose||r.pre.purpose?`<div class="small muted" style="margin-top:7px">Purpose: ${esc(r.post.purpose||r.pre.purpose)}</div>`:''}${r.post.conclusion?`<div class="small" style="margin-top:4px">Conclusion: ${esc(r.post.conclusion)}</div>`:''}</div>`
+ }).join(''):'<div class="muted">No completed runs yet.</div>';
 }
-function pretty(k){ return ({airTemp:'Air °C',trackTemp:'Track °C',humidity:'Humidity %',gearRatio:'Gear ratio',rotofan:'RotoFan',tires:'Tyres',trd:'TRD',frontSetup:'Front setup',rearSetup:'Rear setup',diff:'Diff',esc:'ESC'})[k] || k.replace(/([A-Z])/g,' $1').replace(/^./,m=>m.toUpperCase()); }
-function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 
-$('newSessionBtn').onclick=()=> $('sessionSetup').classList.remove('hidden');
+$('newSessionBtn').onclick=()=>{
+ if(session&&session.runs?.length&&!confirm('Start a brand-new session? Export the current session first if you want a CSV copy.'))return;
+ $('sessionPanel').classList.remove('hidden');$('sessionPanel').scrollIntoView({behavior:'smooth',block:'start'});
+};
 $('createSessionBtn').onclick=()=>{
-  session={id:crypto.randomUUID?.()||String(Date.now()),createdAt:nowISO(),car:$('car').value.trim(),track:$('track').value.trim(),layout:$('layout').value.trim(),raceClass:$('raceClass').value.trim(),notes:$('sessionNotes').value.trim(),baselineSetup:{},runs:[]};
-  session.runs.push({runNumber:1,createdAt:nowISO(),preparedAt:null,effectiveSetup:{},environment:{},results:{},notes:{}});
-  $('sessionSetup').classList.add('hidden'); save(); startWizard('baseline');
+ const name=$('firstCarInput').value.trim()||'Car 1',cat=$('firstClassInput').value.trim(),id=uid();
+ session={id:uid(),createdAt:nowISO(),track:$('trackInput').value.trim(),layout:$('layoutInput').value.trim(),duration:Number($('durationInput').value),notes:$('sessionNotesInput').value.trim(),nextRunNo:1,activeCarId:id,cars:[{id,name,category:cat,setup:{category:cat}}],runs:[]};
+ $('sessionPanel').classList.add('hidden');save();
 };
-
-function startWizard(mode){
-  voiceTarget=mode;
-  voiceIndex=0;
-  if(mode==='baseline'){ voiceQueue=baselineFields; $('voiceMode').textContent='Run 1 · Baseline wizard'; }
-  if(mode==='prepare'){ voiceQueue=preRunFields; $('voiceMode').textContent=`Run ${currentRun().runNumber} · Pre-run`; currentRun().preparedAt=nowISO(); currentRun().date=new Date().toLocaleDateString(); currentRun().time=new Date().toLocaleTimeString(); }
-  if(mode==='post'){ voiceQueue=postRunFields; $('voiceMode').textContent=`Run ${currentRun().runNumber} · Post-run`; currentRun().finishedAt=nowISO(); }
-  $('freeSpeechReminders').classList.toggle('hidden', mode!=='quick'); if(mode==='quick') renderReminders(); $('voicePanel').classList.remove('hidden'); ask(); save();
-}
-function ask(){
-  if(voiceIndex>=voiceQueue.length){ finishWizard(); return; }
-  const [key,prompt]=voiceQueue[voiceIndex];
-  $('promptText').textContent=prompt;
-  $('heardText').textContent='Tap Listen and speak.';
-  $('speechStatus').textContent='Waiting for your answer.';
-  $('manualAnswer').value='';
-  speak(prompt);
-}
-function speak(text){ try{speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.rate=1.02; speechSynthesis.speak(u);}catch(e){} }
-
-function parseNumber(s){ const m=String(s).replace(',','.').match(/-?\d+(?:\.\d+)?/); return m?Number(m[0]):s; }
-function acceptAnswer(raw){
-  if(!session) return;
-  const [key,,type]=voiceQueue[voiceIndex];
-  let val=String(raw ?? '').trim();
-  if(!val){ $('speechStatus').textContent='I did not hear a value. Please try again.'; return; }
-  if(type==='number' && val && !/skip|unknown|don't know|dont know/i.test(val)) val=parseNumber(val);
-  if(/skip|unknown|don't know|dont know/i.test(String(val))) val=null;
-  const r=currentRun();
-  if(voiceTarget==='baseline'){
-    if(val!==null) session.baselineSetup[key]=val;
-    r.effectiveSetup={...session.baselineSetup};
-    if(['airTemp','trackTemp','humidity'].includes(key)) r.environment[key]=val;
-  }
-  if(voiceTarget==='prepare'){
-    if(['airTemp','trackTemp','humidity'].includes(key)) r.environment[key]=val;
-    if(key==='changes'){
-      r.changes=val;
-      if(val && !/^no changes?$/i.test(String(val))) r.changeVoiceText=val;
-    }
-  }
-  if(voiceTarget==='post'){
-    if(['purpose','observations','conclusion','confidence'].includes(key)) r.notes[key]=val;
-    else r.results[key]=val;
-  }
-  save();
-  const shown = val===null ? 'Skipped' : String(val);
-  $('heardText').textContent='Recorded: ' + shown;
-  $('speechStatus').textContent='Saved ✓';
-  $('manualAnswer').value = val===null ? '' : String(val);
-  voiceIndex++;
-  setTimeout(()=>ask(), 900);
-}
-function finishWizard(){
-  const r=currentRun();
-  if(voiceTarget==='post'){
-    const a=Number(r.results.avgLap), b=Number(r.results.bestLap), mb=Number(r.results.motorBefore), ma=Number(r.results.motorAfter);
-    if(Number.isFinite(a)&&Number.isFinite(b)) r.results.delta=a-b;
-    if(Number.isFinite(mb)&&Number.isFinite(ma)) r.results.motorDelta=ma-mb;
-    r.completed=true;
-  }
-  $('voicePanel').classList.add('hidden');
-  save();
-}
-
-$('prepareBtn').onclick=()=>startWizard(currentRun().runNumber===1 && !Object.keys(session.baselineSetup).length?'baseline':'prepare');
-$('postBtn').onclick=()=>startWizard('post');
-$('nextRunBtn').onclick=()=>{
-  const prev=currentRun(); const n=prev.runNumber+1;
-  session.runs.push({runNumber:n,createdAt:nowISO(),preparedAt:null,effectiveSetup:{...(prev.effectiveSetup||session.baselineSetup)},environment:{},results:{},notes:{},basedOn:prev.runNumber});
-  save(); startWizard('prepare');
-};
-$('quickBtn').onclick=()=>{
-  voiceTarget='quick'; voiceQueue=[['quick','Speak naturally. Mention whatever is useful for this run, in any order.','text']]; voiceIndex=0; $('voiceMode').textContent=`Run ${currentRun().runNumber} · Free Speech`; $('freeSpeechReminders').classList.remove('hidden'); renderReminders(); $('voicePanel').classList.remove('hidden'); ask();
-};
-$('skipBtn').onclick=()=>{voiceIndex++;ask();}; $('cancelVoiceBtn').onclick=()=>{$('voicePanel').classList.add('hidden');};
-$('manualSubmitBtn').onclick=()=>acceptAnswer($('manualAnswer').value); $('manualAnswer').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();acceptAnswer($('manualAnswer').value);}});
+$('carSelect').onchange=()=>{session.activeCarId=$('carSelect').value;save();window.scrollTo({top:0,behavior:'smooth'})};
+$('addCarBtn').onclick=()=>{$('addCarPanel').classList.remove('hidden');$('addCarPanel').scrollIntoView({behavior:'smooth',block:'start'})};
+$('createCarBtn').onclick=()=>{const name=$('newCarName').value.trim();if(!name)return alert('Enter a car name.');const id=uid(),cat=$('newCarClass').value.trim();session.cars.push({id,name,category:cat,setup:{category:cat}});session.activeCarId=id;$('newCarName').value='';$('newCarClass').value='';$('addCarPanel').classList.add('hidden');save()};
+$('preBtn').onclick=()=>startSpeech('pre');$('postBtn').onclick=()=>startSpeech('post');
+$('transcriptEdit').addEventListener('input',()=>updateReminders(speechMode,$('transcriptEdit').value));
+$('parseBtn').onclick=()=>{const text=$('transcriptEdit').value.trim()||$('transcriptBox').textContent.trim();if(!text||text==='Nothing yet.')return alert('Speak or type something first.');buildConfirm(parseFree(text,speechMode),speechMode)};
+$('cancelSpeechBtn').onclick=()=>{$('speechPanel').classList.add('hidden')};
+$('backToSpeechBtn').onclick=()=>{$('confirmPanel').classList.add('hidden');$('speechPanel').classList.remove('hidden')};
+$('saveExtractedBtn').onclick=()=>{const vals=gatherConfirm();speechMode==='pre'?commitPre(vals):commitPost(vals)};
+$('nextRunBtn').onclick=()=>{$('runSummary').classList.add('hidden');window.scrollTo({top:0,behavior:'smooth'})};
 
 function initSpeech(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ $('speechStatus').textContent='Speech recognition is not supported in this browser. Typed answers still work.'; return; }
-  recognition=new SR(); recognition.lang='en-US'; recognition.interimResults=false; recognition.maxAlternatives=1;
-  recognition.onstart=()=>{$('speechStatus').textContent='Listening…'; $('listenBtn').textContent='🎙 Listening';};
-  recognition.onerror=e=>{$('speechStatus').textContent='Speech error: '+e.error; $('listenBtn').textContent='🎤 Listen';};
-  recognition.onend=()=>{$('listenBtn').textContent='🎤 Listen';};
-  recognition.onresult=e=>{ const text=e.results[0][0].transcript; $('heardText').textContent='Heard: '+text; $('speechStatus').textContent='Processing…'; if(voiceTarget==='quick'){markMentioned(text); currentRun().quickVoiceLog=text; currentRun().notes.observations=(currentRun().notes.observations?currentRun().notes.observations+' ':'')+text; save(); $('heardText').textContent='Recorded: '+text; $('speechStatus').textContent='Saved ✓'; voiceIndex++; setTimeout(()=>ask(),900);} else acceptAnswer(text); };
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
+ recognition=new SR();recognition.lang='en-US';recognition.interimResults=true;recognition.continuous=true;
+ let final='';
+ recognition.onstart=()=>{$('listenBtn').classList.add('listening');$('listenBtn').textContent='■ Stop listening';final=''};
+ recognition.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const tx=e.results[i][0].transcript;if(e.results[i].isFinal)final+=tx+' ';else interim+=tx}const shown=(final+interim).trim();$('transcriptBox').textContent=shown||'Listening…';$('transcriptEdit').value=shown;updateReminders(speechMode,shown)};
+ recognition.onerror=e=>{$('transcriptBox').textContent='Speech error: '+e.error};
+ recognition.onend=()=>{$('listenBtn').classList.remove('listening');$('listenBtn').textContent='🎤 Start listening'};
 }
-initSpeech(); $('listenBtn').onclick=()=>{ try{speechSynthesis.cancel();}catch(e){} if(recognition){ try{recognition.start();}catch(e){ $('speechStatus').textContent='Microphone is already active. Try again in a moment.';} } else $('speechStatus').textContent='Use the typed answer box below.'; };
+initSpeech();
+$('listenBtn').onclick=()=>{if(!recognition)return alert('Speech recognition is not available in this browser. You can type the note instead.');try{if($('listenBtn').classList.contains('listening'))recognition.stop();else{speechSynthesis?.cancel();recognition.start()}}catch(e){}};
 
 $('exportBtn').onclick=()=>{
- const rows=[['Run','Date','Time','Air C','Track C','Humidity','Body','Motor','Battery','RotoFan','Gear Ratio','Tyres','TRD','Changes','Avg Lap','Best Lap','Delta','Motor Before','Motor After','Motor Delta','FL Temp','FR Temp','RL Temp','RR Temp','Purpose','Observations','Conclusion','Confidence']];
- session.runs.forEach(r=>{const s=r.effectiveSetup||{};const e=r.environment||{};const x=r.results||{};const n=r.notes||{};rows.push([r.runNumber,r.date||'',r.time||'',e.airTemp??'',e.trackTemp??'',e.humidity??'',s.body??'',s.motor??'',s.battery??'',s.rotofan??'',s.gearRatio??'',s.tires??'',s.trd??'',r.changes??'',x.avgLap??'',x.bestLap??'',x.delta??'',x.motorBefore??'',x.motorAfter??'',x.motorDelta??'',x.flTemp??'',x.frTemp??'',x.rlTemp??'',x.rrTemp??'',n.purpose??'',n.observations??'',n.conclusion??'',n.confidence??'']);});
- const csv=rows.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${session.car||'session'}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
+ const header=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Chassis pod height','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','tours @ target time','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car'];
+ const rows=[header];
+ session.runs.filter(r=>r.completed).sort((a,b)=>a.runNo-b.runNo).forEach(r=>{const s=r.effectiveSetup||{},p=r.pre||{},o=r.post||{},c=carById(r.carId);rows.push([r.runNo,r.date||'',r.time||'',p.trackTemp??'',p.airTemp??'',p.humidity??'',s.category??c?.category??'',s.podHeight??'',s.diffType??'',s.body??'',s.motor??'',s.battery??'',s.rotofan??'',p.motorBefore??'',o.motorAfter??'',o.motorDelta??'',s.gearRatio??'',s.frontTires??'',s.rearTires??'',s.trd??'',s.avd??'',s.avgDia??'',s.ard??'',s.arg??'',o.laps??'',o.targetLaps??'',o.totalTime??'',o.averageLap??'',o.bestLap??'',o.lapDelta??'',o.notes??p.notes??'',o.purpose??p.purpose??'',o.observations??'',o.conclusion??'',c?.name??''])});
+ const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)
 };
 load();
 </script>
-</body>
-</html>
+</body></html>
