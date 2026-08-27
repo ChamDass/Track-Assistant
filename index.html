@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Track Assistant V2.7 Tap-to-Dictate</title>
+<title>Track Assistant V2.8</title>
 <style>
 :root{--bg:#0d1015;--card:#171c24;--card2:#11161d;--line:#2b3340;--text:#f4f7fb;--muted:#95a2b5;--accent:#7c5cff;--ok:#38d18b;--warn:#ffb84d;--danger:#ff6060}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -98,6 +98,31 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
     <button id="fieldCancelBtn" class="danger big" style="margin-top:10px">Cancel</button>
   </div>
 
+
+  <div id="longTextRecorder" class="card hidden">
+    <div class="muted small" id="longFieldGroup">Long text</div>
+    <div class="prompt" id="longFieldPrompt">—</div>
+    <div id="longTextPreview" class="transcript">Hold the button and speak.</div>
+    <div class="small muted" style="margin:7px 0">Press and hold while talking. Release when finished. Repeat to add more.</div>
+    <button id="holdTalkBtn" class="holdTalk big">🎤 HOLD TO TALK</button>
+    <label>Captured text</label>
+    <textarea id="longTextEdit"></textarea>
+    <div class="grid2" style="margin-top:10px">
+      <button id="longTextSaveBtn" class="success">✓ Save text</button>
+      <button id="longTextCancelBtn" class="danger">Cancel</button>
+    </div>
+  </div>
+
+  <div id="runEditor" class="card hidden">
+    <h2 id="runEditorTitle">View / Edit Run</h2>
+    <div class="muted small">Edits affect this saved run only.</div>
+    <div id="runEditorGrid" class="editorGrid" style="margin-top:12px"></div>
+    <div class="grid2" style="margin-top:12px">
+      <button id="saveRunEditBtn" class="success big">✓ Save Run Changes</button>
+      <button id="cancelRunEditBtn" class="secondary big">Close</button>
+    </div>
+  </div>
+
   <div id="runSummary" class="card hidden">
     <h2 id="runSummaryTitle">Run saved</h2>
     <div id="summaryMetrics" class="summaryGrid"></div>
@@ -113,7 +138,7 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
     <div id="timeline" class="timeline" style="margin-top:12px"></div>
   </div>
 
-  <div class="footer">Track Assistant V2.7 · Export formatting fix · Local prototype</div>
+  <div class="footer">Track Assistant V2.8 · Run editing + brand aliases + hold-to-talk · Local prototype</div>
 </div>
 
 <style>
@@ -124,6 +149,18 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
 .fieldChip.auto{border-color:#8d6c2e;background:#2b2314;color:#ffd68b}
 .fieldChip .v{font-weight:900}
 
+.runItem{cursor:pointer}
+.runItem:hover{border-color:#4b5870}
+.editorGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.editorSection{grid-column:1/-1;font-size:12px;font-weight:800;color:#aeb9c8;text-transform:uppercase;letter-spacing:.06em;margin-top:7px}
+.editorField{background:#10151c;border:1px solid var(--line);border-radius:11px;padding:9px}
+.editorField label{margin:0 0 5px}
+.editorField textarea{min-height:68px}
+.holdTalk{user-select:none;-webkit-user-select:none;touch-action:none;background:#7c5cff;color:white}
+.holdTalk.active{background:#4c35da;box-shadow:0 0 0 10px rgba(124,92,255,.14)}
+@media(max-width:650px){.editorGrid{grid-template-columns:1fr}}
+
+
 .fieldChip.activeListen{animation:fieldPulse 1s infinite;border-color:#8f78ff;background:#292145;color:white}
 @keyframes fieldPulse{50%{box-shadow:0 0 0 9px rgba(124,92,255,0)}0%{box-shadow:0 0 0 0 rgba(124,92,255,.35)}}
 .quickStatus{margin-top:10px;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:#10151c;color:var(--muted);font-size:12px}
@@ -132,9 +169,24 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
 
 <script>
 const $=id=>document.getElementById(id);
-let session=null, recognition=null, activeField=null, activePhase='pre', activeChip=null, speechInProgress=false;
+let session=null, recognition=null, activeField=null, activePhase='pre', activeChip=null, speechInProgress=false, editingRunId=null, longTextField=null, longRecognition=null, longFinalText='';
 
 const setupKeys=['category','podHeight','diffType','body','motor','battery','rotofan','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg'];
+
+const longTextKeys=['purpose','notes','observations','conclusion'];
+const brandAliases=[
+  [/\bmarker\b/gi,'Marka'],
+  [/\bmarco\b/gi,'Marka'],
+  [/\bmarca\b/gi,'Marka'],
+  [/\bmarcov\b/gi,'Marka'],
+  [/\bmarka\b/gi,'Marka']
+];
+function normalizeVocabulary(text){
+  let out=String(text??'');
+  brandAliases.forEach(([rx,repl])=>out=out.replace(rx,repl));
+  return out;
+}
+
 const preFields=[
  ['trackTemp','Track temperature','number'],['airTemp','Air temperature','number'],['humidity','Humidity','number'],
  ['motorBefore','Motor temp before','number'],['category','Category','text'],['podHeight','Pod height','text'],
@@ -203,7 +255,7 @@ function renderFieldChips(phase){
    const b=document.createElement('button'); b.className='fieldChip';
    if(value!=null&&value!=='')b.classList.add('recorded'); else if(inherited!=null)b.classList.add('inherited');
    b.innerHTML=(value!=null&&value!==''?'✓ ':inherited!=null?'✓ ':'')+esc(label)+(value!=null&&value!==''?` · <span class="v">${esc(formatVal(k,value))}</span>`:inherited!=null?` · <span class="v">${esc(inherited)}</span>`:'');
-   b.onclick=()=>startFieldDictation(phase,k,label,type,b);
+   b.onclick=()=>{if(longTextKeys.includes(k))openLongTextRecorder(phase,k,label,b);else startFieldDictation(phase,k,label,type,b)};
    target.appendChild(b);
  });
  if(phase==='post'){
@@ -245,7 +297,7 @@ function openCorrection(cur,label,heard=''){
 function saveField(raw){
  if(!activeField)return;
  const {k,type}=activeField;
- let v=String(raw??'').trim(); if(!v)return;
+ let v=normalizeVocabulary(String(raw??'').trim()); if(!v)return;
  if(type==='number')v=cleanNum(v);
  if(type==='time')v=parseTime(v);
  if(v==null){alert('I could not understand that value. Try typing it.');return}
@@ -260,6 +312,99 @@ function saveField(raw){
  if(activeChip)activeChip.classList.remove('activeListen');
  $('fieldRecorder').classList.add('hidden'); activeField=null; activeChip=null; save();
 }
+
+function openLongTextRecorder(phase,k,label,chip){
+ activePhase=phase; longTextField={k,label,chip}; activeChip=chip;
+ const r=makeRun(); let existing=phase==='pre'?r.pre[k]:r.post[k];
+ $('longFieldGroup').textContent=phase==='pre'?'PRE-RUN':'POST-RUN';
+ $('longFieldPrompt').textContent=label;
+ $('longTextEdit').value=existing||'';
+ $('longTextPreview').textContent=existing||'Hold the button and speak.';
+ $('longTextRecorder').classList.remove('hidden');
+ $('longTextRecorder').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function initLongRecognition(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
+ longRecognition=new SR(); longRecognition.lang='en-US'; longRecognition.interimResults=true; longRecognition.continuous=true;
+ longRecognition.onstart=()=>{$('holdTalkBtn').classList.add('active');longFinalText='';};
+ longRecognition.onresult=e=>{
+   let interim='';
+   for(let i=e.resultIndex;i<e.results.length;i++){
+     const tx=e.results[i][0].transcript;
+     if(e.results[i].isFinal)longFinalText+=tx+' '; else interim+=tx;
+   }
+   const base=$('longTextEdit').value.trim();
+   const spoken=normalizeVocabulary((longFinalText+interim).trim());
+   $('longTextPreview').textContent=[base,spoken].filter(Boolean).join(' ');
+ };
+ longRecognition.onend=()=>{
+   $('holdTalkBtn').classList.remove('active');
+   const base=$('longTextEdit').value.trim();
+   const spoken=normalizeVocabulary(longFinalText.trim());
+   if(spoken)$('longTextEdit').value=[base,spoken].filter(Boolean).join(' ').trim();
+   $('longTextPreview').textContent=$('longTextEdit').value||'Hold the button and speak.';
+   longFinalText='';
+ };
+ longRecognition.onerror=e=>{$('holdTalkBtn').classList.remove('active');$('longTextPreview').textContent='Speech error: '+e.error;};
+}
+initLongRecognition();
+function startHold(e){e.preventDefault();try{longRecognition?.start()}catch(err){}}
+function stopHold(e){e.preventDefault();try{longRecognition?.stop()}catch(err){}}
+$('holdTalkBtn').addEventListener('pointerdown',startHold);
+$('holdTalkBtn').addEventListener('pointerup',stopHold);
+$('holdTalkBtn').addEventListener('pointercancel',stopHold);
+$('holdTalkBtn').addEventListener('pointerleave',stopHold);
+$('longTextSaveBtn').onclick=()=>{
+ if(!longTextField)return;
+ const v=normalizeVocabulary($('longTextEdit').value.trim());
+ if(v){const r=makeRun();if(activePhase==='pre')r.pre[longTextField.k]=v;else r.post[longTextField.k]=v;}
+ $('longTextRecorder').classList.add('hidden');longTextField=null;activeChip=null;save();
+};
+$('longTextCancelBtn').onclick=()=>{$('longTextRecorder').classList.add('hidden');longTextField=null;activeChip=null;};
+
+function openRunEditor(runId){
+ const r=session.runs.find(x=>x.id===runId); if(!r)return;
+ editingRunId=runId;
+ const c=carById(r.carId),ss=r.effectiveSetup||{},p=r.pre||{},o=r.post||{};
+ $('runEditorTitle').textContent=`Run ${r.runNo} · ${c?.name||''}`;
+ const groups=[
+ ['Environment',[['trackTemp','Track temperature','pre'],['airTemp','Air temperature','pre'],['humidity','Humidity','pre'],['motorBefore','Motor temp before','pre']]],
+ ['Setup',[['category','Category','setup'],['podHeight','Pod height','setup'],['diffType','Diff type','setup'],['body','Body / Carro','setup'],['motor','Motor','setup'],['battery','LiPo no.','setup'],['rotofan','RotoFan','setup'],['gearRatio','Gear ratio','setup'],['frontTires','Front tires','setup'],['rearTires','Rear tires','setup'],['trd','TRD','setup'],['avd','AVD Ø','setup'],['avgDia','AVG Ø','setup'],['ard','ARD Ø','setup'],['arg','ARG Ø','setup']]],
+ ['Results',[['motorAfter','Motor temp after','post'],['laps','No. laps','post'],['totalTime','Total time (m:ss.mmm)','time'],['bestLap','Best lap','post']]],
+ ['Test',[['notes','Notes','post'],['purpose','Purpose','post'],['observations','Observations','post'],['conclusion','Possible conclusion','post']]]
+ ];
+ $('runEditorGrid').innerHTML='';
+ groups.forEach(([name,fields])=>{
+  const h=document.createElement('div');h.className='editorSection';h.textContent=name;$('runEditorGrid').appendChild(h);
+  fields.forEach(([k,label,src])=>{
+   const w=document.createElement('div');w.className='editorField';
+   const lab=document.createElement('label');lab.textContent=label;w.appendChild(lab);
+   const inp=document.createElement(longTextKeys.includes(k)?'textarea':'input');inp.dataset.editKey=k;inp.dataset.editSrc=src;
+   let v=src==='setup'?ss[k]:src==='pre'?p[k]:src==='time'?o.totalTime:o[k];
+   if(k==='totalTime'&&v!=null)v=fmtTime(v);inp.value=v??'';w.appendChild(inp);$('runEditorGrid').appendChild(w);
+  });
+ });
+ $('runEditor').classList.remove('hidden');$('runEditor').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('saveRunEditBtn').onclick=()=>{
+ const r=session.runs.find(x=>x.id===editingRunId);if(!r)return;
+ document.querySelectorAll('#runEditorGrid [data-edit-key]').forEach(inp=>{
+  const k=inp.dataset.editKey,src=inp.dataset.editSrc,raw=normalizeVocabulary(inp.value.trim());
+  let v=raw;
+  if(src==='time')v=raw?parseTime(raw):null;
+  else if(['trackTemp','airTemp','humidity','motorBefore','motorAfter','laps','bestLap','avd','avgDia','ard','arg'].includes(k))v=raw?cleanNum(raw):null;
+  if(src==='setup'){if(v==null||v==='')delete r.effectiveSetup[k];else r.effectiveSetup[k]=v;}
+  else if(src==='pre'){if(v==null||v==='')delete r.pre[k];else r.pre[k]=v;}
+  else {if(v==null||v==='')delete r.post[k];else r.post[k]=v;}
+ });
+ const laps=cleanNum(r.post.laps),total=cleanNum(r.post.totalTime),best=cleanNum(r.post.bestLap),mb=cleanNum(r.pre.motorBefore),ma=cleanNum(r.post.motorAfter);
+ if(laps&&total)r.post.averageLap=total/laps;else delete r.post.averageLap;
+ if(r.post.averageLap!=null&&best!=null)r.post.lapDelta=r.post.averageLap-best;else delete r.post.lapDelta;
+ if(mb!=null&&ma!=null)r.post.motorDelta=ma-mb;else delete r.post.motorDelta;
+ editingRunId=null;$('runEditor').classList.add('hidden');save();
+};
+$('cancelRunEditBtn').onclick=()=>{editingRunId=null;$('runEditor').classList.add('hidden');};
+
 function render(){
  if(!session){
    $('nextRunNo').textContent='1';$('activeCarLabel').textContent='No active session';$('sessionMeta').textContent='Create a testing session to begin.';
@@ -275,7 +420,7 @@ function render(){
  renderFieldChips('pre');
  if(r?.preparedAt){$('postCard').classList.remove('hidden');$('postTitle').textContent=`Run ${r.runNo} · POST-RUN`;renderFieldChips('post')} else $('postCard').classList.add('hidden');
  const runs=[...session.runs].filter(x=>x.completed).sort((a,b)=>b.runNo-a.runNo);
- $('timeline').innerHTML=runs.length?runs.map(x=>{const cc=carById(x.carId);return `<div class="runItem"><div class="runHead"><strong>Run ${x.runNo} · ${esc(cc?.name||'')}</strong><span class="small muted">${esc(x.time||'')}</span></div><div class="chips"><span class="chip">${esc(x.post.laps??'—')} laps</span><span class="chip">Avg ${fmtLap(x.post.averageLap)}</span><span class="chip">Best ${fmtLap(x.post.bestLap)}</span></div></div>`}).join(''):'<div class="muted">No completed runs yet.</div>';
+ $('timeline').innerHTML=runs.length?runs.map(x=>{const cc=carById(x.carId);return `<div class="runItem" onclick="openRunEditor('${x.id}')"><div class="runHead"><strong>Run ${x.runNo} · ${esc(cc?.name||'')}</strong><span class="small muted">${esc(x.time||'')}</span></div><div class="chips"><span class="chip">${esc(x.post.laps??'—')} laps</span><span class="chip">Avg ${fmtLap(x.post.averageLap)}</span><span class="chip">Best ${fmtLap(x.post.bestLap)}</span></div></div>`}).join(''):'<div class="muted">No completed runs yet.</div>';
 }
 $('newSessionBtn').onclick=()=>{$('sessionPanel').classList.remove('hidden');$('sessionPanel').scrollIntoView({behavior:'smooth',block:'start'})};
 $('createSessionBtn').onclick=()=>{const id=uid(),name=$('firstCarInput').value.trim()||'Car 1',cat=$('firstClassInput').value.trim();session={id:uid(),createdAt:nowISO(),track:$('trackInput').value.trim(),layout:$('layoutInput').value.trim(),duration:Number($('durationInput').value),notes:$('sessionNotesInput').value.trim(),nextRunNo:1,activeCarId:id,cars:[{id,name,category:cat,setup:{category:cat}}],runs:[]};$('sessionPanel').classList.add('hidden');save();makeRun()};
@@ -304,7 +449,7 @@ function initSpeech(){
    openCorrection(cur,activeField?.label||'Field');
  };
  recognition.onresult=e=>{
-   const text=e.results[0][0].transcript;
+   const text=normalizeVocabulary(e.results[0][0].transcript);
    const af=activeField;
    if(!af)return;
    let parsed=text;
@@ -327,31 +472,16 @@ initSpeech();
 $('exportBtn').onclick=()=>{
  const header=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Chassis pod height','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car'];
  const rows=[header];
+ const dec=v=>Number.isFinite(Number(v))?Number(v).toFixed(3).replace('.',','):'';
+ const dec1=v=>Number.isFinite(Number(v))?Number(v).toFixed(1).replace('.',','):'';
+ const rawDec=v=>Number.isFinite(Number(v))?String(v).replace('.',','):'';
  session.runs.filter(r=>r.completed).sort((a,b)=>a.runNo-b.runNo).forEach(r=>{
-   const ss=r.effectiveSetup||{},p=r.pre||{},o=r.post||{},c=carById(r.carId);
-   const totalTimeFormatted = Number.isFinite(Number(o.totalTime)) ? fmtTime(o.totalTime) : '';
-   const avgFormatted = Number.isFinite(Number(o.averageLap)) ? Number(o.averageLap).toFixed(3) : '';
-   const bestFormatted = Number.isFinite(Number(o.bestLap)) ? Number(o.bestLap).toFixed(3) : '';
-   const deltaFormatted = Number.isFinite(Number(o.lapDelta)) ? Number(o.lapDelta).toFixed(3) : '';
-   const motorDeltaFormatted = Number.isFinite(Number(o.motorDelta)) ? Number(o.motorDelta).toFixed(1) : '';
-   rows.push([
-     r.runNo,r.date||'',r.time||'',
-     p.trackTemp??'',p.airTemp??'',p.humidity??'',
-     ss.category??c?.category??'',ss.podHeight??'',ss.diffType??'',ss.body??'',ss.motor??'',ss.battery??'',ss.rotofan??'',
-     p.motorBefore??'',o.motorAfter??'',motorDeltaFormatted,
-     ss.gearRatio??'',ss.frontTires??'',ss.rearTires??'',ss.trd??'',
-     ss.avd??'',ss.avgDia??'',ss.ard??'',ss.arg??'',
-     o.laps??'',totalTimeFormatted,avgFormatted,bestFormatted,deltaFormatted,
-     o.notes??p.notes??'',o.purpose??p.purpose??'',o.observations??'',o.conclusion??'',c?.name??''
-   ]);
+  const ss=r.effectiveSetup||{},p=r.pre||{},o=r.post||{},c=carById(r.carId);
+  rows.push([r.runNo,r.date||'',r.time||'',rawDec(p.trackTemp),rawDec(p.airTemp),rawDec(p.humidity),ss.category??c?.category??'',ss.podHeight??'',ss.diffType??'',ss.body??'',ss.motor??'',ss.battery??'',ss.rotofan??'',rawDec(p.motorBefore),rawDec(o.motorAfter),dec1(o.motorDelta),ss.gearRatio??'',ss.frontTires??'',ss.rearTires??'',ss.trd??'',rawDec(ss.avd),rawDec(ss.avgDia),rawDec(ss.ard),rawDec(ss.arg),o.laps??'',Number.isFinite(Number(o.totalTime))?fmtTime(o.totalTime):'',dec(o.averageLap),dec(o.bestLap),dec(o.lapDelta),o.notes??p.notes??'',o.purpose??p.purpose??'',o.observations??'',o.conclusion??'',c?.name??'']);
  });
- const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');
- const blob=new Blob([csv],{type:'text/csv'});
- const a=document.createElement('a');
- a.href=URL.createObjectURL(blob);
- a.download=`track-assistant-${new Date().toISOString().slice(0,10)}.csv`;
- a.click();
- URL.revokeObjectURL(a.href);
+ const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(';')).join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
 };
 load();
 </script>
