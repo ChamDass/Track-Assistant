@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Track Assistant V2.8</title>
+<title>Track Assistant V2.9</title>
 <style>
 :root{--bg:#0d1015;--card:#171c24;--card2:#11161d;--line:#2b3340;--text:#f4f7fb;--muted:#95a2b5;--accent:#7c5cff;--ok:#38d18b;--warn:#ffb84d;--danger:#ff6060}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -22,6 +22,7 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
 .footer{text-align:center;color:#707d90;font-size:11px;margin-top:20px}
 @media(max-width:650px){.grid2,.grid3,.extractGrid,.summaryGrid{grid-template-columns:1fr}.top{flex-direction:column}.hero{grid-template-columns:1fr}.speechButtons{grid-template-columns:1fr}.runNo{font-size:46px}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -133,12 +134,12 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
   <div id="historyCard" class="card hidden">
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
       <h2 style="margin:0">Session history</h2>
-      <button class="secondary" id="exportBtn">Export CSV</button>
+      <button class="secondary" id="exportBtn">Export Excel</button>
     </div>
     <div id="timeline" class="timeline" style="margin-top:12px"></div>
   </div>
 
-  <div class="footer">Track Assistant V2.8 · Run editing + brand aliases + hold-to-talk · Local prototype</div>
+  <div class="footer">Track Assistant V2.9 · XLSX export + improved vocabulary · Local prototype</div>
 </div>
 
 <style>
@@ -179,11 +180,17 @@ const brandAliases=[
   [/\bmarco\b/gi,'Marka'],
   [/\bmarca\b/gi,'Marka'],
   [/\bmarcov\b/gi,'Marka'],
+  [/\bmarqa\b/gi,'Marka'],
+  [/\bmark a\b/gi,'Marka'],
   [/\bmarka\b/gi,'Marka']
 ];
 function normalizeVocabulary(text){
   let out=String(text??'');
-  brandAliases.forEach(([rx,repl])=>out=out.replace(rx,repl));
+  brandAliases.forEach(([rx,repl])=>{out=out.replace(rx,repl)});
+  out=out.replace(/\bmarket\s+(?=(?:one|two|three|four|five|six|seven|eight|nine|\d)\b)/gi,'Marka ');
+  out=out.replace(/\bmark\s+(?=(?:one|two|three|four|five|six|seven|eight|nine|\d|i{1,3}|iv|v|vi{0,3}|ix)\b)/gi,'Marka ');
+  const roman={i:'1',ii:'2',iii:'3',iv:'4',v:'5',vi:'6',vii:'7',viii:'8',ix:'9'};
+  out=out.replace(/\bMarka\s+(i{1,3}|iv|v|vi{0,3}|ix)\b/gi,(mm,r)=>'Marka '+(roman[r.toLowerCase()]||r));
   return out;
 }
 
@@ -470,18 +477,90 @@ function initSpeech(){
 initSpeech();
 
 $('exportBtn').onclick=()=>{
- const header=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Chassis pod height','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car'];
- const rows=[header];
- const dec=v=>Number.isFinite(Number(v))?Number(v).toFixed(3).replace('.',','):'';
- const dec1=v=>Number.isFinite(Number(v))?Number(v).toFixed(1).replace('.',','):'';
- const rawDec=v=>Number.isFinite(Number(v))?String(v).replace('.',','):'';
- session.runs.filter(r=>r.completed).sort((a,b)=>a.runNo-b.runNo).forEach(r=>{
-  const ss=r.effectiveSetup||{},p=r.pre||{},o=r.post||{},c=carById(r.carId);
-  rows.push([r.runNo,r.date||'',r.time||'',rawDec(p.trackTemp),rawDec(p.airTemp),rawDec(p.humidity),ss.category??c?.category??'',ss.podHeight??'',ss.diffType??'',ss.body??'',ss.motor??'',ss.battery??'',ss.rotofan??'',rawDec(p.motorBefore),rawDec(o.motorAfter),dec1(o.motorDelta),ss.gearRatio??'',ss.frontTires??'',ss.rearTires??'',ss.trd??'',rawDec(ss.avd),rawDec(ss.avgDia),rawDec(ss.ard),rawDec(ss.arg),o.laps??'',Number.isFinite(Number(o.totalTime))?fmtTime(o.totalTime):'',dec(o.averageLap),dec(o.bestLap),dec(o.lapDelta),o.notes??p.notes??'',o.purpose??p.purpose??'',o.observations??'',o.conclusion??'',c?.name??'']);
+ if(typeof XLSX==='undefined'){
+   alert('Excel export library could not be loaded. Check your internet connection and try again.');
+   return;
+ }
+ const headers=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Chassis pod height','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car'];
+ const rows=[headers];
+ const completed=session.runs.filter(r=>r.completed).sort((a,b)=>a.runNo-b.runNo);
+ completed.forEach(r=>{
+   const ss=r.effectiveSetup||{},p=r.pre||{},o=r.post||{},c=carById(r.carId);
+   rows.push([
+     r.runNo,
+     r.date||'',
+     r.time||'',
+     Number.isFinite(Number(p.trackTemp))?Number(p.trackTemp):null,
+     Number.isFinite(Number(p.airTemp))?Number(p.airTemp):null,
+     Number.isFinite(Number(p.humidity))?Number(p.humidity):null,
+     normalizeVocabulary(ss.category??c?.category??''),
+     ss.podHeight??'',
+     normalizeVocabulary(ss.diffType??''),
+     normalizeVocabulary(ss.body??''),
+     normalizeVocabulary(ss.motor??''),
+     normalizeVocabulary(ss.battery??''),
+     ss.rotofan??'',
+     Number.isFinite(Number(p.motorBefore))?Number(p.motorBefore):null,
+     Number.isFinite(Number(o.motorAfter))?Number(o.motorAfter):null,
+     Number.isFinite(Number(o.motorDelta))?Number(o.motorDelta):null,
+     ss.gearRatio??'',
+     normalizeVocabulary(ss.frontTires??''),
+     normalizeVocabulary(ss.rearTires??''),
+     ss.trd??'',
+     Number.isFinite(Number(ss.avd))?Number(ss.avd):null,
+     Number.isFinite(Number(ss.avgDia))?Number(ss.avgDia):null,
+     Number.isFinite(Number(ss.ard))?Number(ss.ard):null,
+     Number.isFinite(Number(ss.arg))?Number(ss.arg):null,
+     Number.isFinite(Number(o.laps))?Number(o.laps):null,
+     Number.isFinite(Number(o.totalTime))?Number(o.totalTime)/86400:null,
+     Number.isFinite(Number(o.averageLap))?Number(o.averageLap):null,
+     Number.isFinite(Number(o.bestLap))?Number(o.bestLap):null,
+     Number.isFinite(Number(o.lapDelta))?Number(o.lapDelta):null,
+     normalizeVocabulary(o.notes??p.notes??''),
+     normalizeVocabulary(o.purpose??p.purpose??''),
+     normalizeVocabulary(o.observations??''),
+     normalizeVocabulary(o.conclusion??''),
+     c?.name??''
+   ]);
  });
- const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(';')).join('\r\n');
- const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`track-assistant-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
+
+ const ws=XLSX.utils.aoa_to_sheet(rows);
+ const col={};headers.forEach((h,i)=>col[h]=i);
+ const fmt=(r,c,z)=>{const a=XLSX.utils.encode_cell({r:r,c:c});if(ws[a])ws[a].z=z;};
+ for(let r=1;r<rows.length;r++){
+   ['Temperature Track','Temperature Air','Humidity','temp avant','temp après'].forEach(h=>fmt(r,col[h],'0.0'));
+   fmt(r,col['motor delta'],'0.0');
+   ['AVD','AVG','ARD','ARG'].forEach(h=>fmt(r,col[h],'0.000'));
+   fmt(r,col['no laps'],'0');
+   fmt(r,col['total time'],'[m]:ss.000');
+   ['Moyenne','Meilleur Tour','lap delta'].forEach(h=>fmt(r,col[h],'0.000'));
+ }
+ ws['!cols']=[
+   {wch:6},{wch:12},{wch:11},{wch:14},{wch:14},{wch:10},{wch:13},{wch:16},{wch:14},{wch:16},
+   {wch:18},{wch:13},{wch:13},{wch:11},{wch:11},{wch:11},{wch:11},{wch:15},{wch:15},{wch:10},
+   {wch:10},{wch:10},{wch:10},{wch:10},{wch:9},{wch:13},{wch:11},{wch:13},{wch:10},{wch:30},
+   {wch:26},{wch:36},{wch:28},{wch:14}
+ ];
+
+ const summary=[['Track Assistant Session Summary',''],['Track',session.track||''],['Layout',session.layout||''],['Run duration (min)',session.duration||''],['Session started',session.createdAt?new Date(session.createdAt).toLocaleString():''],['Completed runs',completed.length],['Cars',session.cars.map(c=>c.name).join(', ')],['',''],['Car','Runs','Best Average','Best Lap']];
+ session.cars.forEach(c=>{
+   const cr=completed.filter(r=>r.carId===c.id);
+   const av=cr.map(r=>Number(r.post?.averageLap)).filter(Number.isFinite);
+   const bl=cr.map(r=>Number(r.post?.bestLap)).filter(Number.isFinite);
+   summary.push([c.name,cr.length,av.length?Math.min(...av):'',bl.length?Math.min(...bl):'']);
+ });
+ const sws=XLSX.utils.aoa_to_sheet(summary);
+ sws['!cols']=[{wch:28},{wch:24},{wch:14},{wch:14}];
+ for(let r=9;r<summary.length;r++){
+   const c1=XLSX.utils.encode_cell({r:r,c:2}),c2=XLSX.utils.encode_cell({r:r,c:3});
+   if(sws[c1])sws[c1].z='0.000';if(sws[c2])sws[c2].z='0.000';
+ }
+
+ const wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,ws,'Session Log');
+ XLSX.utils.book_append_sheet(wb,sws,'Session Summary');
+ const safe=(session.track||'Track').replace(/[\\/:*?"<>|]/g,'-').trim()||'Track';
+ XLSX.writeFile(wb,`Track-Assistant-${safe}-${new Date().toISOString().slice(0,10)}.xlsx`,{compression:true});
 };
 load();
 </script>
