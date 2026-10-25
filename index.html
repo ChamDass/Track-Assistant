@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Track Assistant V2.9</title>
+<title>Track Assistant V3.0</title>
 <style>
 :root{--bg:#0d1015;--card:#171c24;--card2:#11161d;--line:#2b3340;--text:#f4f7fb;--muted:#95a2b5;--accent:#7c5cff;--ok:#38d18b;--warn:#ffb84d;--danger:#ff6060}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -139,7 +139,7 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
     <div id="timeline" class="timeline" style="margin-top:12px"></div>
   </div>
 
-  <div class="footer">Track Assistant V2.9 · XLSX export + improved vocabulary · Local prototype</div>
+  <div class="footer">Track Assistant V3.0 · Car-specific setup inheritance + XLSX export · Local prototype</div>
 </div>
 
 <style>
@@ -172,7 +172,10 @@ label{display:block;color:#aeb8c7;font-size:12px;margin:10px 0 6px}input,textare
 const $=id=>document.getElementById(id);
 let session=null, recognition=null, activeField=null, activePhase='pre', activeChip=null, speechInProgress=false, editingRunId=null, longTextField=null, longRecognition=null, longFinalText='';
 
-const setupKeys=['category','podHeight','diffType','body','motor','battery','rotofan','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg'];
+// Keep podHeight as the legacy storage key for rear ride height shims.
+const newSetupFields=[["frontDroop","Front droop (mm)"],["frontRideHeightShims","Front ride height shims (mm)"],["centerShockDroop","Center shock droop (mm)"],["toe","Toe in/out (signed degrees)"],["steeringMax","Steering max (degrees)"],["steeringDRStart","Steering DR start (%)"],["steeringDRFinish","Steering DR finish (%)"]];
+const newSetupKeys=newSetupFields.map(([key])=>key);
+const setupKeys=['category','podHeight','diffType','body','motor','battery','rotofan','gearRatio','frontTires','rearTires','trd','avd','avgDia','ard','arg',...newSetupKeys];
 
 const longTextKeys=['purpose','notes','observations','conclusion'];
 const brandAliases=[
@@ -196,7 +199,8 @@ function normalizeVocabulary(text){
 
 const preFields=[
  ['trackTemp','Track temperature','number'],['airTemp','Air temperature','number'],['humidity','Humidity','number'],
- ['motorBefore','Motor temp before','number'],['category','Category','text'],['podHeight','Pod height','text'],
+ ['motorBefore','Motor temp before','number'],['category','Category','text'],['podHeight','Rear ride height shims (mm)','text'],
+ ...newSetupFields.map(([key,label])=>[key,label,'number']),
  ['diffType','Diff type','text'],['body','Body / Carro','text'],['motor','Motor','text'],['battery','LiPo no.','text'],
  ['rotofan','RotoFan','text'],['gearRatio','Gear ratio','text'],['frontTires','Front tires','text'],['rearTires','Rear tires','text'],
  ['trd','TRD no.','text'],['avd','AVD Ø mm','number'],['avgDia','AVG Ø mm','number'],['ard','ARD Ø mm','number'],['arg','ARG Ø mm','number'],
@@ -218,7 +222,7 @@ function currentOpenRun(){return session?.runs?.find(r=>!r.completed&&r.carId===
 function carById(id){return session?.cars?.find(c=>c.id===id)}
 function save(){if(session)localStorage.setItem('trackAssistantV24',JSON.stringify(session));render()}
 function load(){try{session=JSON.parse(localStorage.getItem('trackAssistantV24'))}catch(e){}render()}
-function cleanNum(v){if(v==null||v==='')return null;const m=String(v).replace(',','.').match(/-?\d+(?:\.\d+)?/);return m?Number(m[0]):null}
+function cleanNum(v){if(v==null||v==='')return null;const m=String(v).replace(/\b(?:minus|negative)\s*/gi,'-').replace(/\b(?:plus|positive)\s*/gi,'+').replace(',','.').match(/[+-]?(?:\d+(?:\.\d+)?|\.\d+)/);return m?Number(m[0]):null}
 function parseTime(v){
  const t=String(v).toLowerCase().replace(/,/g,'.').trim();
  let m=t.match(/(\d+)\s*:\s*(\d{1,2})(?:\.(\d{1,3}))?/);
@@ -245,8 +249,9 @@ function makeRun(){
 function formatVal(k,v){
  if(v==null||v==='')return '';
  if(['trackTemp','airTemp','motorBefore','motorAfter'].includes(k))return v+'°';
- if(k==='humidity')return v+'%';
- if(['avd','avgDia','ard','arg'].includes(k))return v+' mm';
+ if(['humidity','steeringDRStart','steeringDRFinish'].includes(k))return v+'%';
+ if(['toe','steeringMax'].includes(k))return v+'°';
+ if(['frontDroop','frontRideHeightShims','centerShockDroop','avd','avgDia','ard','arg'].includes(k))return v+' mm';
  if(k==='totalTime')return fmtTime(v);
  if(['averageLap','lapDelta','bestLap'].includes(k))return fmtLap(v);
  if(k==='motorDelta')return Number(v).toFixed(1)+'°';
@@ -261,7 +266,7 @@ function renderFieldChips(phase){
    if(phase==='pre'&&setupKeys.includes(k)&&value==null&&c?.setup?.[k]!=null) inherited=c.setup[k];
    const b=document.createElement('button'); b.className='fieldChip';
    if(value!=null&&value!=='')b.classList.add('recorded'); else if(inherited!=null)b.classList.add('inherited');
-   b.innerHTML=(value!=null&&value!==''?'✓ ':inherited!=null?'✓ ':'')+esc(label)+(value!=null&&value!==''?` · <span class="v">${esc(formatVal(k,value))}</span>`:inherited!=null?` · <span class="v">${esc(inherited)}</span>`:'');
+   b.innerHTML=(value!=null&&value!==''?'✓ ':inherited!=null?'✓ ':'')+esc(label)+(value!=null&&value!==''?` · <span class="v">${esc(formatVal(k,value))}</span>`:inherited!=null?` · <span class="v">${esc(formatVal(k,inherited))}</span>`:'');
    b.onclick=()=>{if(longTextKeys.includes(k))openLongTextRecorder(phase,k,label,b);else startFieldDictation(phase,k,label,type,b)};
    target.appendChild(b);
  });
@@ -372,11 +377,12 @@ $('longTextCancelBtn').onclick=()=>{$('longTextRecorder').classList.add('hidden'
 function openRunEditor(runId){
  const r=session.runs.find(x=>x.id===runId); if(!r)return;
  editingRunId=runId;
- const c=carById(r.carId),ss=r.effectiveSetup||{},p=r.pre||{},o=r.post||{};
+ r.effectiveSetup ||= {}; r.pre ||= {}; r.post ||= {};
+ const c=carById(r.carId),ss=r.effectiveSetup,p=r.pre,o=r.post;
  $('runEditorTitle').textContent=`Run ${r.runNo} · ${c?.name||''}`;
  const groups=[
  ['Environment',[['trackTemp','Track temperature','pre'],['airTemp','Air temperature','pre'],['humidity','Humidity','pre'],['motorBefore','Motor temp before','pre']]],
- ['Setup',[['category','Category','setup'],['podHeight','Pod height','setup'],['diffType','Diff type','setup'],['body','Body / Carro','setup'],['motor','Motor','setup'],['battery','LiPo no.','setup'],['rotofan','RotoFan','setup'],['gearRatio','Gear ratio','setup'],['frontTires','Front tires','setup'],['rearTires','Rear tires','setup'],['trd','TRD','setup'],['avd','AVD Ø','setup'],['avgDia','AVG Ø','setup'],['ard','ARD Ø','setup'],['arg','ARG Ø','setup']]],
+ ['Setup',[['category','Category','setup'],['podHeight','Rear ride height shims (mm)','setup'],...newSetupFields.map(([key,label])=>[key,label,'setup']),['diffType','Diff type','setup'],['body','Body / Carro','setup'],['motor','Motor','setup'],['battery','LiPo no.','setup'],['rotofan','RotoFan','setup'],['gearRatio','Gear ratio','setup'],['frontTires','Front tires','setup'],['rearTires','Rear tires','setup'],['trd','TRD','setup'],['avd','AVD Ø','setup'],['avgDia','AVG Ø','setup'],['ard','ARD Ø','setup'],['arg','ARG Ø','setup']]],
  ['Results',[['motorAfter','Motor temp after','post'],['laps','No. laps','post'],['totalTime','Total time (m:ss.mmm)','time'],['bestLap','Best lap','post']]],
  ['Test',[['notes','Notes','post'],['purpose','Purpose','post'],['observations','Observations','post'],['conclusion','Possible conclusion','post']]]
  ];
@@ -399,7 +405,7 @@ $('saveRunEditBtn').onclick=()=>{
   const k=inp.dataset.editKey,src=inp.dataset.editSrc,raw=normalizeVocabulary(inp.value.trim());
   let v=raw;
   if(src==='time')v=raw?parseTime(raw):null;
-  else if(['trackTemp','airTemp','humidity','motorBefore','motorAfter','laps','bestLap','avd','avgDia','ard','arg'].includes(k))v=raw?cleanNum(raw):null;
+  else if(['trackTemp','airTemp','humidity','motorBefore','motorAfter','laps','bestLap','avd','avgDia','ard','arg',...newSetupKeys].includes(k))v=raw?cleanNum(raw):null;
   if(src==='setup'){if(v==null||v==='')delete r.effectiveSetup[k];else r.effectiveSetup[k]=v;}
   else if(src==='pre'){if(v==null||v==='')delete r.pre[k];else r.pre[k]=v;}
   else {if(v==null||v==='')delete r.post[k];else r.post[k]=v;}
@@ -481,7 +487,7 @@ $('exportBtn').onclick=()=>{
    alert('Excel export library could not be loaded. Check your internet connection and try again.');
    return;
  }
- const headers=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Chassis pod height','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car'];
+ const headers=['no.','Date','Heure','Temperature Track','Temperature Air','Humidity','Categorie','Rear ride height shims (mm)','Diff type','Carro','Moteur','Lipo no.','RotoFan yes or no','temp avant','temp après','motor delta','Gear ratio','Front tires','Rear tires','TRD no.','AVD','AVG','ARD','ARG','no laps','total time','Moyenne','Meilleur Tour','lap delta','notes','Purpose','Observations','Possible conclusion','Car',...newSetupFields.map(([,label])=>label)];
  const rows=[headers];
  const completed=session.runs.filter(r=>r.completed).sort((a,b)=>a.runNo-b.runNo);
  completed.forEach(r=>{
@@ -520,7 +526,8 @@ $('exportBtn').onclick=()=>{
      normalizeVocabulary(o.purpose??p.purpose??''),
      normalizeVocabulary(o.observations??''),
      normalizeVocabulary(o.conclusion??''),
-     c?.name??''
+     c?.name??'',
+     ...newSetupKeys.map(key=>ss[key] == null || ss[key] === '' ? null : cleanNum(ss[key]))
    ]);
  });
 
@@ -530,6 +537,7 @@ $('exportBtn').onclick=()=>{
  for(let r=1;r<rows.length;r++){
    ['Temperature Track','Temperature Air','Humidity','temp avant','temp après'].forEach(h=>fmt(r,col[h],'0.0'));
    fmt(r,col['motor delta'],'0.0');
+   newSetupFields.forEach(([,label])=>fmt(r,col[label],'0.###'));
    ['AVD','AVG','ARD','ARG'].forEach(h=>fmt(r,col[h],'0.000'));
    fmt(r,col['no laps'],'0');
    fmt(r,col['total time'],'[m]:ss.000');
@@ -539,7 +547,8 @@ $('exportBtn').onclick=()=>{
    {wch:6},{wch:12},{wch:11},{wch:14},{wch:14},{wch:10},{wch:13},{wch:16},{wch:14},{wch:16},
    {wch:18},{wch:13},{wch:13},{wch:11},{wch:11},{wch:11},{wch:11},{wch:15},{wch:15},{wch:10},
    {wch:10},{wch:10},{wch:10},{wch:10},{wch:9},{wch:13},{wch:11},{wch:13},{wch:10},{wch:30},
-   {wch:26},{wch:36},{wch:28},{wch:14}
+   {wch:26},{wch:36},{wch:28},{wch:14},
+   ...newSetupFields.map(([,label])=>({wch:Math.max(18,label.length+2)}))
  ];
 
  const summary=[['Track Assistant Session Summary',''],['Track',session.track||''],['Layout',session.layout||''],['Run duration (min)',session.duration||''],['Session started',session.createdAt?new Date(session.createdAt).toLocaleString():''],['Completed runs',completed.length],['Cars',session.cars.map(c=>c.name).join(', ')],['',''],['Car','Runs','Best Average','Best Lap']];
